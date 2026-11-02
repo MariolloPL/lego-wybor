@@ -273,6 +273,13 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
 .family input{font:800 20px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:15ch;text-align:center}
 .note.bad{color:var(--heart)}
 .linkcode{font:700 13px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;background:var(--bg);padding:8px 10px;border-radius:10px;user-select:all}
+.sidestats{display:grid;gap:8px;margin-top:8px}
+.side{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;align-items:center;font-size:14px;font-weight:700}
+.side .bar2{height:14px;border-radius:99px;background:var(--sunk);overflow:hidden;position:relative}
+.side .bar2 i{position:absolute;inset:0 auto 0 0;background:var(--kid-c)}
+.side .bar2::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;border-left:2px dashed var(--muted)}
+.side .txt{grid-column:2;color:var(--muted);font-size:13px}
+.side .txt b{color:var(--ink)} .side .warn{color:var(--warn)}
 .howto{font-size:14px;color:var(--muted);display:grid;gap:4px;margin:0;padding-left:18px}
 
 /* ---------- telefon ---------- */
@@ -402,6 +409,11 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
       </div>
       <p class="note" id="limits-note"></p>
     </div>
+    <div>
+      <h3>Lewa czy prawa karta?</h3>
+      <p>Jak często wygrywa karta po lewej stronie. Przy uczciwym wybieraniu wychodzi około połowy; wyraźna przewaga jednej strony może znaczyć, że dziecko klika z przyzwyczajenia. Strony są losowane, a w finale zamieniane w rewanżu, więc taki nawyk nie faworyzuje żadnego zestawu – tylko dodaje przypadkowości.</p>
+      <div id="sidestats" class="sidestats"></div>
+    </div>
     <div id="devices" hidden>
       <h3>Inne urządzenia</h3>
       <p>Otwórz ten link na telefonie lub tablecie – kod wpisze się sam i postęp będzie wspólny.</p>
@@ -441,7 +453,7 @@ function cleanKid(src){
   const b = blankKid(); if (!src || typeof src !== "object") return b;
   b.stage = Math.min(3, Math.max(0, src.stage|0));
   if (src.review && typeof src.review === "object") for (const [n,v] of Object.entries(src.review)) if (okNum(n) && "SMN".includes(v) && v.length===1) b.review[n] = v;
-  if (Array.isArray(src.log)) b.log = src.log.filter(e => e && "drvf".includes(e.t) && e.t.length===1 && okNum(e.a) && (e.t==="v" || okNum(e.b)) && (e.w==null || e.w===e.a || e.w===e.b)).map(e => e.t==="v" ? {t:"v",a:e.a} : {t:e.t,a:e.a,b:e.b,w:e.w??null});
+  if (Array.isArray(src.log)) b.log = src.log.filter(e => e && "drvf".includes(e.t) && e.t.length===1 && okNum(e.a) && (e.t==="v" || okNum(e.b)) && (e.w==null || e.w===e.a || e.w===e.b)).map(e => e.t==="v" ? {t:"v",a:e.a} : e.t==="r" ? {t:"r",a:e.a,b:e.b,w:e.w??null,c:(e.c===e.a||e.c===e.b)?e.c:e.a} : {t:e.t,a:e.a,b:e.b,w:e.w??null});
   b.rank = Array.isArray(src.rank) ? src.rank.filter(okNum) : [];
   b.done = !!src.done;
   b.extra = Array.isArray(src.extra) ? src.extra.filter(e => e && okNum(e.n)).map(e => ({ n:e.n, name: typeof e.name==="string" ? e.name.slice(0,80) : "" })) : [];
@@ -620,9 +632,10 @@ function engine(k){
     if (e.t==="f") continue;
     duelCount++; played[e.a]++; played[e.b]++; met[key2(e.a,e.b)] = (met[key2(e.a,e.b)]||0) + 1;
     if (e.t==="r"){
-      chance.add(e.a);
-      if (e.w===e.a){ lives[e.a] = 1; lives[e.b]--; wins[e.a]++; losses[e.b]++; lostTo[e.b].push(e.a); }
-      else if (e.w===e.b){ wins[e.b]++; losses[e.a]++; }
+      const c = e.c || e.a, o = c===e.a ? e.b : e.a;   // c = walczy o powrót, o = finalista
+      chance.add(c);
+      if (e.w===c){ lives[c] = 1; lives[o]--; wins[c]++; losses[o]++; lostTo[o].push(c); }
+      else if (e.w===o){ wins[o]++; losses[c]++; }
       continue;
     }
     if (!e.w) continue;
@@ -646,7 +659,8 @@ function engine(k){
         .sort((x,y) => wins[y]-wins[x] || losses[x]-losses[y] || idx[x]-idx[y]);
       if (candidates.length && alive.length){
         const weakest = alive.slice().sort((x,y) => strength(x)-strength(y) || idx[y]-idx[x])[0];
-        next = {t:"r", a:candidates[0], b:weakest};
+        const c = candidates[0], seed2 = String(duelCount);
+        next = hash(c+weakest+seed2)%2 ? {t:"r", a:c, b:weakest, c} : {t:"r", a:weakest, b:c, c};
       } else phaseDone = alive.length >= S.fmin || (alive.length>0 && alive.length===entrants.length);
     }
   }
@@ -883,7 +897,7 @@ function renderDuels(E){
   const main = document.getElementById("main"); const nx = E.next;
   let inner;
   if (nx){
-    const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.a))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
+    const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.c))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
     inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>
       <button class="skip" id="skip">Nie umiem wybrać – następna para</button>`;
   } else {
@@ -914,19 +928,19 @@ function playDuel(winner){
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const wEl = document.querySelector(`.pick[data-win="${winner}"]`), lEl = document.querySelector(`.pick[data-win="${loser}"]`);
   wEl.classList.add("win"); lEl.classList.add("lose");
-  const comeback = nx.t==="r" && winner===nx.a;
+  const comeback = nx.t==="r" && winner===nx.c;
   stamp(wEl, comeback ? "Wraca do gry!" : "Wygrywa!", "");
-  if (st===1 && !(nx.t==="r" && loser===nx.a)){
+  if (st===1 && !(nx.t==="r" && loser===nx.c)){
     const hearts = lEl.querySelectorAll(".lives .on"); const h = hearts[hearts.length-1];
     if (h){ h.classList.add("falling"); }
     if (E.lives[loser] - 1 <= 0) stamp(lEl, "Odpada!", "bad");
   }
   if (!reduce) burst(wEl);
   if (comeback) sfx.comeback(); else sfx.win();
-  if (st===1 && !(nx.t==="r" && loser===nx.a)) setTimeout(() => (E.lives[loser]-1 <= 0 ? sfx.out() : sfx.lose()), 380);
+  if (st===1 && !(nx.t==="r" && loser===nx.c)) setTimeout(() => (E.lives[loser]-1 <= 0 ? sfx.out() : sfx.lose()), 380);
   run++;
   setTimeout(() => {
-    K().log.push({ t:nx.t, a:nx.a, b:nx.b, w:winner }); K().done = false; save(); busy = false; render();
+    K().log.push(nx.t==="r" ? { t:"r", a:nx.a, b:nx.b, w:winner, c:nx.c } : { t:nx.t, a:nx.a, b:nx.b, w:winner }); K().done = false; save(); busy = false; render();
     if (MILESTONES[run]){ toast("⚡ " + MILESTONES[run]); sfx.fanfare(); }
   }, reduce ? 250 : 1000);
 }
@@ -948,7 +962,7 @@ function burst(el){
 function toast(text){ const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
 function skipDuel(){
   const E = engine(kid); const nx = K().stage===2 ? E.fnext : E.next; if (!nx || busy) return;
-  K().log.push({ t:nx.t, a:nx.a, b:nx.b, w:null }); save(); sfx.skip(); render();
+  K().log.push(nx.t==="r" ? { t:"r", a:nx.a, b:nx.b, w:null, c:nx.c } : { t:nx.t, a:nx.a, b:nx.b, w:null }); save(); sfx.skip(); render();
 }
 
 /* ---------- etap 3: wielki finał ---------- */
@@ -1158,7 +1172,25 @@ document.getElementById("family").addEventListener("submit", e => {
 
 /* ---------- panel rodzica ---------- */
 const SETTING_KEYS = ["fmin","fmax","livesS","livesM"];
+// a = lewa karta, b = prawa (tak są pokazywane); liczymy rozstrzygnięte pojedynki: zwykłe, drugą szansę i finał
+function sideStats(k){
+  let left = 0, n = 0;
+  for (const e of state.kids[k].log){ if (e.t==="v" || !e.w) continue; n++; if (e.w===e.a) left++; }
+  return { left, n };
+}
+function renderSideStats(){
+  document.getElementById("sidestats").innerHTML = ["jas","antek"].map(k => {
+    const { left, n } = sideStats(k); const p = n ? left/n : .5;
+    // przewaga ponad 2 odchylenia standardowe przy co najmniej 20 pojedynkach = prawdopodobnie nawyk
+    const habit = n >= 20 && Math.abs(p - .5) > 2*Math.sqrt(.25/n);
+    const txt = !n ? "jeszcze brak pojedynków"
+      : `lewa <b>${Math.round(100*p)}%</b> · prawa <b>${Math.round(100*(1-p))}%</b> z ${n} pojedynków` +
+        (n < 20 ? " – za mało, żeby coś stwierdzić" : habit ? ` – <span class="warn">wyraźnie częściej ${p>.5?"lewa":"prawa"}, może to nawyk</span>` : " – w normie");
+    return `<div class="side" style="--kid-c:${k==="jas"?"#1d6bd0":"#e46a0a"}"><span>${KIDNAME[k]}</span><div class="bar2"><i style="width:${Math.round(100*p)}%"></i></div><span class="txt">${txt}</span></div>`;
+  }).join("");
+}
 function openSettings(){
+  renderSideStats();
   for (const k of SETTING_KEYS) document.getElementById(k).value = S()[k];
   document.getElementById("limits-note").textContent = ""; document.getElementById("reset-note").textContent = "";
   document.querySelectorAll("[data-reset]").forEach(b => { b.dataset.armed = ""; b.textContent = "Wyczyść wybory " + KIDGEN[b.dataset.reset]; });

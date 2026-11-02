@@ -34,6 +34,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
    „druga szansa” dla zestawu, który przegrał tylko z finalistami; ręczne „Jeszcze raz” w tabeli.
 3. Wielki finał: każdy z każdym, dwa razy (runda 1 + rewanż ze zamienionymi stronami); remis („Tak samo”) = 0,5.
    Bez podpowiedzi przy zestawach (żadnych serii wygranych na kartach), żeby nie sugerować wyboru.
+   Strony kart są losowane (powtarzalnie, z numerów zestawów i numeru pojedynku), także w drugiej szansie (pole `c` w dzienniku
+   = zestaw walczący o powrót). W dzienniku `a` = lewa karta, `b` = prawa. Panel rodzica pokazuje, jak często wygrywa lewa.
 4. Lista marzeń z możliwością poprawienia kolejności.
 
 Zakładka „Wszystkie zestawy” (dla rodzica): wszystkie zestawy z oznaczeniem listy (Jaś/Antek), bieżącą oceną, linkiem
