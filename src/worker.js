@@ -20,6 +20,8 @@ const json = (body, status = 200) =>
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    // diagnostyka: czy sekret jest ustawiony (bez ujawniania wartości)
+    if (url.pathname === "/api/health") return json({ ok: true, familyCodeSet: !!norm(env.FAMILY_CODE) });
     const m = url.pathname.match(/^\/api\/state\/([a-z]+)$/);
     if (!m) return env.ASSETS.fetch(request);
     const key = m[1];

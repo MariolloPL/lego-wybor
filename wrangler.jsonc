@@ -6,6 +6,8 @@
   "workers_dev": true,
   // Workery z Durable Objects nie obsługują preview URL.
   "preview_urls": false,
+  // Zachowaj zmienne dodane w panelu Cloudflare przy kolejnych wdrożeniach z GitHuba.
+  "keep_vars": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
