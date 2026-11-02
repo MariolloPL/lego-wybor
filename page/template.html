@@ -1,0 +1,1051 @@
+<title>Wymarzone zestawy LEGO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Układ: wybór dziecka → 4 etapy (Przegląd, Pojedynki, Wielki finał, Lista marzeń); pojedynek = dwie duże karty obok siebie; dolny pasek z licznikiem i „Dalej”. */
+:root{
+  --bg:#edf1f6; --surface:#ffffff; --sunk:#e2e8f0; --ink:#1a2332; --muted:#5a6679; --line:#d3dbe6;
+  --heart:#e2304a; --heart-soft:#fde3e7; --maybe:#c98a00; --maybe-soft:#fff3cc; --nope:#677284; --nope-soft:#e6e9ee;
+  --jas:#1d6bd0; --jas-soft:#dceafd; --antek:#e46a0a; --antek-soft:#ffe8d4;
+  --stud:#f4c20d; --ok:#178a4a; --warn:#b45309;
+  --kid:var(--jas); --kid-soft:var(--jas-soft);
+  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:18px; --shadow:0 1px 2px rgb(20 30 50/.08),0 6px 18px rgb(20 30 50/.07);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10151d; --surface:#19202b; --sunk:#232c39; --ink:#e8edf5; --muted:#9ba7b9; --line:#2d3746;
+  --heart:#ff5a70; --heart-soft:#3b1c24; --maybe:#f2b632; --maybe-soft:#3a2f10; --nope:#8b96a8; --nope-soft:#252c37;
+  --jas:#5ea2ff; --jas-soft:#16304f; --antek:#ff9a45; --antek-soft:#43280f;
+  --stud:#f4c20d; --ok:#4fd18b; --warn:#f0a43a; --shadow:0 1px 2px rgb(0 0 0/.4),0 6px 18px rgb(0 0 0/.3);
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#10151d; --surface:#19202b; --sunk:#232c39; --ink:#e8edf5; --muted:#9ba7b9; --line:#2d3746;
+  --heart:#ff5a70; --heart-soft:#3b1c24; --maybe:#f2b632; --maybe-soft:#3a2f10; --nope:#8b96a8; --nope-soft:#252c37;
+  --jas:#5ea2ff; --jas-soft:#16304f; --antek:#ff9a45; --antek-soft:#43280f;
+  --stud:#f4c20d; --ok:#4fd18b; --warn:#f0a43a; --shadow:0 1px 2px rgb(0 0 0/.4),0 6px 18px rgb(0 0 0/.3);
+  color-scheme:dark;}
+body[data-kid="antek"]{--kid:var(--antek); --kid-soft:var(--antek-soft)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:150px;scroll-padding-bottom:130px}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.45 var(--f-body);padding-top:env(safe-area-inset-top,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--kid);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.spacer{flex:1}
+
+/* ---------- start ---------- */
+#pick{min-height:100vh;display:grid;place-items:center;padding-block:32px}
+#pick .inner{display:grid;gap:28px;justify-items:center;text-align:center;width:100%}
+.studs{display:flex;gap:10px;justify-content:center}
+.studs i{width:22px;height:22px;border-radius:50%;background:var(--stud);box-shadow:inset 0 -3px 0 rgb(0 0 0/.15)}
+#pick h1{font-size:clamp(34px,6vw,56px);font-weight:800}
+#pick p.lead{margin:0;color:var(--muted);font-size:18px;max-width:34ch}
+.kids{display:grid;grid-template-columns:repeat(2,minmax(0,260px));gap:20px;width:100%;justify-content:center}
+.kidbtn{position:relative;border:0;border-radius:22px;padding:34px 16px 22px;background:var(--c);color:#fff;display:grid;gap:6px;justify-items:center;box-shadow:0 6px 0 var(--cd),var(--shadow);transition:transform .12s,box-shadow .12s}
+.kidbtn::before{content:"";position:absolute;top:-14px;left:50%;width:120px;height:28px;transform:translateX(-50%);background:radial-gradient(circle at 25% 50%,var(--c) 12px,transparent 13px),radial-gradient(circle at 75% 50%,var(--c) 12px,transparent 13px)}
+.kidbtn:hover{transform:translateY(-2px)}
+.kidbtn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--cd),var(--shadow)}
+.kidbtn .nm{font:800 clamp(38px,7vw,54px)/1 var(--f-display)}
+.kidbtn .st{font-weight:700;font-size:15px;opacity:.95}
+.kidbtn.j{--c:#1d6bd0;--cd:#124d99}
+.kidbtn.a{--c:#e46a0a;--cd:#a94c05}
+@media (max-width:520px){.kids{grid-template-columns:1fr;max-width:320px}}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-weight:700;padding:6px}
+
+/* ---------- nagłówek ---------- */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.toprow{display:flex;align-items:center;gap:12px;padding-block:10px;flex-wrap:wrap}
+.who .badge{font:800 22px/1 var(--f-display);color:#fff;background:var(--kid);border-radius:12px;padding:8px 14px 6px;display:inline-block}
+.sync{font-size:13px;font-weight:700;color:var(--muted)}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 12px;font-weight:700;font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.iconbtn:hover{border-color:var(--kid)}
+.steps{display:flex;gap:6px;padding-bottom:10px;overflow-x:auto;scrollbar-width:none}
+.steps::-webkit-scrollbar{display:none}
+.step{flex:1 0 auto;border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 12px;text-align:left;min-width:120px}
+.step small{display:block;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.step b{font:700 17px/1.2 var(--f-display)}
+.step[aria-current="step"]{border-color:var(--kid);background:var(--kid-soft)}
+.step:disabled{opacity:.45;cursor:not-allowed}
+.step.done small::after{content:" ✓";color:var(--ok)}
+
+.goal{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;padding-block:18px 8px}
+.goal h2{font-size:clamp(24px,3.4vw,32px)}
+.goal p{margin:0;color:var(--muted);flex-basis:100%;max-width:70ch}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-block:8px 14px}
+.seg{display:inline-flex;background:var(--sunk);border-radius:12px;padding:3px}
+.seg button{border:0;background:none;border-radius:9px;padding:7px 12px;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:700}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .c{color:var(--muted);font-weight:700;margin-left:4px}
+.chip[aria-pressed="true"] .c{color:inherit;opacity:.7}
+
+/* ---------- karty ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;padding-bottom:150px}
+@media (max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;border:3px solid transparent;transition:border-color .15s,opacity .15s,transform .15s;min-width:0}
+.card[data-st="S"]{border-color:var(--heart)}
+.card[data-st="M"]{border-color:var(--maybe)}
+.card[data-st="N"]{opacity:.55}
+.card[data-st="N"] .pic img{filter:grayscale(1)}
+.pic{position:relative;aspect-ratio:4/3;background:#fff;display:grid;place-items:center;max-width:100%;overflow:hidden}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:8px}
+.pic .ph{position:absolute;inset:0;display:grid;place-items:center;background:var(--sunk);color:var(--muted);font:800 30px/1 var(--f-display);text-align:center}
+.pic .ph small{display:block;font:700 13px/1.4 var(--f-body)}
+.pic .num{position:absolute;left:8px;top:8px;background:rgb(26 35 50/.82);color:#fff;font:700 13px/1 var(--f-body);padding:5px 8px;border-radius:8px;font-variant-numeric:tabular-nums}
+.pic .flag{position:absolute;right:8px;top:8px;background:var(--warn);color:#fff;font:800 12px/1 var(--f-body);padding:5px 8px;border-radius:8px}
+.pic .flag.added{background:var(--kid)}
+.body{padding:10px 12px 4px;display:grid;gap:2px;flex:1;min-width:0}
+.body h3{font-size:18px;font-weight:700;overflow-wrap:anywhere}
+.meta{font-size:13px;color:var(--muted);font-weight:700}
+.acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px 10px 12px}
+.act{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:8px 4px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:5px;min-height:46px}
+.act svg{width:22px;height:22px;flex:none}
+.act.no[aria-pressed="true"]{background:var(--nope);border-color:var(--nope);color:#fff}
+.act.maybe[aria-pressed="true"]{background:var(--maybe);border-color:var(--maybe);color:#fff}
+.act.yes[aria-pressed="true"]{background:var(--heart);border-color:var(--heart);color:#fff}
+.act.no:hover{border-color:var(--nope)} .act.maybe:hover{border-color:var(--maybe)} .act.yes:hover{border-color:var(--heart)}
+.act .q{font:800 22px/1 var(--f-display)}
+@media (max-width:520px){.grid .act .t{display:none}.body h3{font-size:16px}}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 10px;font-weight:700}
+
+/* tryb po kolei */
+.solo{display:grid;justify-items:center;gap:14px;padding-bottom:150px}
+.solo .card{width:min(560px,100%)}
+.solo .pic{aspect-ratio:auto;height:min(40vh,420px);width:100%}
+.solo .body{padding:14px 18px 6px;text-align:center}
+.solo .body h3{font-size:clamp(22px,3.4vw,30px)}
+.solo .meta{font-size:15px}
+.solo .acts{padding:14px 16px 18px;gap:10px}
+.solo .act{min-height:64px;font-size:18px;border-radius:18px;flex-direction:column;gap:2px}
+.solo .act svg{width:28px;height:28px}
+.nav{display:flex;gap:10px;align-items:center;color:var(--muted);font-weight:700;flex-wrap:wrap;justify-content:center}
+.bar{height:10px;width:min(560px,100%);background:var(--sunk);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--kid);border-radius:99px;transition:width .2s}
+.big-done{font:800 30px/1.1 var(--f-display);text-align:center}
+
+/* ---------- pojedynek ---------- */
+.duel{display:grid;gap:14px;justify-items:center;padding-bottom:170px}
+.banner{background:var(--maybe-soft);border:2px solid var(--maybe);border-radius:14px;padding:8px 14px;font-weight:800;text-align:center;max-width:640px}
+.pair{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
+.pick{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border-radius:22px;box-shadow:var(--shadow);border:3px solid var(--line);display:flex;flex-direction:column;overflow:hidden;min-width:0;transition:transform .2s,border-color .15s,opacity .25s}
+.pick:hover{border-color:var(--kid);transform:translateY(-3px)}
+.pick:focus-visible{outline:3px solid var(--kid);outline-offset:3px}
+.pick .pic{aspect-ratio:1/1}
+.pick .body{padding:10px 12px 12px;text-align:center}
+.pick .body h3{font-size:clamp(17px,2.6vw,24px)}
+.lives{display:flex;gap:3px;justify-content:center;font-size:18px;line-height:1;margin-top:4px}
+.lives .on{color:var(--heart)} .lives .off{color:var(--line)}
+.pick.win{border-color:var(--heart);transform:scale(1.04)}
+.pick.lose{opacity:.25;transform:scale(.94)}
+.vs{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:2;background:var(--stud);color:#1a2332;font:800 22px/1 var(--f-display);width:54px;height:54px;border-radius:50%;display:grid;place-items:center;box-shadow:0 3px 0 rgb(0 0 0/.2);pointer-events:none}
+@media (max-width:520px){.pair{gap:10px}.vs{width:42px;height:42px;font-size:17px;top:30%}.pick .body{padding:8px}.pick .meta{font-size:12px}}
+.skip{border:2px dashed var(--line);background:none;border-radius:14px;padding:10px 16px;font-weight:800;color:var(--muted)}
+.skip:hover{border-color:var(--muted)}
+.pick{position:relative}
+.streak{display:inline-block;margin:4px auto 0;background:var(--maybe-soft);color:var(--warn);border-radius:99px;padding:2px 10px;font-weight:800;font-size:13px}
+.pick.win{border-color:var(--heart);box-shadow:0 0 0 6px var(--heart-soft),var(--shadow);animation:winpop .55s cubic-bezier(.3,1.6,.5,1)}
+.pick.lose{animation:shake .35s;opacity:.35;transform:scale(.94)}
+@keyframes winpop{0%{transform:scale(1)}40%{transform:scale(1.1) rotate(-1.5deg)}100%{transform:scale(1.05)}}
+@keyframes shake{0%,100%{translate:0}25%{translate:-7px}75%{translate:7px}}
+.stamp{position:absolute;left:50%;top:34%;z-index:3;translate:-50% -50%;white-space:nowrap;font:800 clamp(18px,3.4vw,28px)/1 var(--f-display);padding:8px 14px;border-radius:14px;color:#fff;background:var(--heart);box-shadow:0 4px 0 rgb(0 0 0/.2);animation:stamp .45s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
+.stamp.bad{background:var(--nope);rotate:-8deg}
+@keyframes stamp{from{scale:2.2;opacity:0}to{scale:1;opacity:1}}
+.burst{position:absolute;width:0;height:0;z-index:4;pointer-events:none}
+.burst i{position:absolute;width:14px;height:10px;border-radius:3px;background:var(--c);box-shadow:inset 0 -2px 0 rgb(0 0 0/.2);animation:fly .9s cubic-bezier(.15,.7,.4,1) forwards}
+.burst i::after{content:"";position:absolute;left:3px;top:-3px;width:8px;height:4px;border-radius:2px 2px 0 0;background:inherit}
+@keyframes fly{from{transform:translate(-50%,-50%) rotate(0);opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+.lives span.falling{display:inline-block;animation:heartfall .8s ease-in forwards}
+@keyframes heartfall{0%{transform:scale(1.4)}30%{transform:scale(1.4) translateY(-6px)}100%{transform:translateY(60px) rotate(40deg);opacity:0}}
+.run{color:var(--warn)}
+.toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:40;background:var(--ink);color:var(--bg);font:800 20px/1.2 var(--f-display);padding:12px 20px;border-radius:16px;box-shadow:var(--shadow);text-align:center;animation:toast 2.4s ease forwards;pointer-events:none;max-width:calc(100vw - 32px)}
+@keyframes toast{0%{opacity:0;translate:-50% 20px}12%,80%{opacity:1;translate:-50% 0}100%{opacity:0}}
+
+/* tabela */
+details.table{width:min(900px,100%);background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow)}
+details.table summary{cursor:pointer;padding:12px 16px;font:700 18px/1.2 var(--f-display)}
+.trows{display:grid;gap:2px;padding:0 10px 12px}
+.trow{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px 6px;border-radius:10px}
+.trow:nth-child(odd){background:var(--bg)}
+.trow .pic{aspect-ratio:4/3;border-radius:8px}
+.trow .pic img{padding:2px}
+.trow .pic .ph{font-size:12px}
+.trow .nm{font-weight:800;font-size:14px;overflow-wrap:anywhere}
+.trow .sub{font-size:12px;color:var(--muted);font-weight:700}
+.trow.out{opacity:.7}
+.tsec{font:700 13px/1 var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:10px 6px 4px}
+.mini{border:1.5px solid var(--kid);color:var(--kid);background:none;border-radius:10px;padding:5px 9px;font-weight:800;font-size:13px;white-space:nowrap}
+
+/* ---------- dolny pasek ---------- */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -6px 20px rgb(20 30 50/.08)}
+.dockrow{display:flex;align-items:center;gap:10px 16px;padding-block:12px;flex-wrap:wrap}
+.counts{display:flex;gap:14px;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;align-items:center}
+.counts .s{color:var(--heart)} .counts .m{color:var(--maybe)} .counts .n{color:var(--nope)} .counts .u{color:var(--muted)}
+.msg{font-weight:700;color:var(--muted);flex:1;min-width:180px}
+.msg.good{color:var(--ok)}
+.go{border:0;border-radius:14px;background:var(--kid);color:#fff;font:800 18px/1 var(--f-display);padding:14px 22px;box-shadow:0 4px 0 rgb(0 0 0/.18)}
+.go:disabled{background:var(--sunk);color:var(--muted);box-shadow:none;cursor:not-allowed}
+.undo{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:11px 14px;font-weight:800}
+.undo:disabled{opacity:.4;cursor:not-allowed}
+
+/* ---------- lista marzeń ---------- */
+.rank{list-style:none;margin:0;padding:0;display:grid;gap:12px;max-width:760px}
+.ritem{display:grid;grid-template-columns:auto 110px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:10px 12px}
+.ritem .pos{font:800 34px/1 var(--f-display);color:var(--kid);width:44px;text-align:center}
+.ritem:first-child .pos{color:var(--stud);text-shadow:0 1px 0 rgb(0 0 0/.25)}
+.ritem .pic{border-radius:12px}
+.ritem .pic img{padding:4px}
+.ritem h3{font-size:19px}
+.mv{display:grid;gap:6px}
+.mv button{border:2px solid var(--line);background:var(--surface);border-radius:12px;width:48px;height:42px;font-size:20px;font-weight:800}
+.mv button:disabled{opacity:.3;cursor:not-allowed}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.links a{font-size:14px;font-weight:800;color:var(--kid);text-decoration:none;border:1.5px solid currentColor;border-radius:99px;padding:3px 10px}
+@media (max-width:520px){.ritem{grid-template-columns:auto 76px minmax(0,1fr)}.ritem .mv{grid-column:1/-1;grid-auto-flow:column;justify-content:end}.ritem .pos{font-size:26px;width:30px}}
+.final-head{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding-block:24px 16px}
+.final-head h2{font-size:clamp(28px,4.5vw,42px)}
+.near{max-width:760px;margin-top:22px;padding-bottom:150px}
+.near h3{font-size:18px;color:var(--muted);margin-bottom:8px}
+
+/* ---------- okna ---------- */
+dialog{border:0;border-radius:20px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 32px));box-shadow:0 20px 60px rgb(0 0 0/.35)}
+dialog::backdrop{background:rgb(10 15 25/.5)}
+.dlg{padding:20px;display:grid;gap:16px;max-height:85vh;overflow:auto}
+.dlg h2{font-size:26px}
+.dlg h3{font-size:18px;margin-bottom:6px}
+.dlg p{margin:0;color:var(--muted);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.fields label{display:grid;gap:4px;font-size:13px;font-weight:800;color:var(--muted)}
+.fields input{font:inherit;font-weight:800;font-size:18px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+.btn{border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:8px 12px;font-weight:800;font-size:14px}
+.btn.danger{border-color:var(--heart);color:var(--heart)}
+.btn.solid{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.note{font-size:13px;font-weight:700;color:var(--ok);min-height:1.2em;margin:0}
+.addprev{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;align-items:center;background:var(--bg);border-radius:14px;padding:8px}
+.addprev .pic{border-radius:10px}
+.addprev h3{font-size:18px}
+.family{display:grid;gap:10px;justify-items:center;background:var(--surface);padding:16px;border-radius:18px;box-shadow:var(--shadow);width:min(440px,100%);text-align:center}
+.family label{font-size:14px;color:var(--muted)}
+.family input{font:800 20px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:15ch;text-align:center}
+.note.bad{color:var(--heart)}
+.linkcode{font:700 13px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;background:var(--bg);padding:8px 10px;border-radius:10px;user-select:all}
+.howto{font-size:14px;color:var(--muted);display:grid;gap:4px;margin:0;padding-left:18px}
+
+/* ---------- telefon ---------- */
+@media (max-width:640px){
+  .toprow{padding-block:8px;gap:8px}
+  .who .badge{font-size:19px;padding:6px 11px 4px}
+  .iconbtn .lbl{display:none}
+  .sync{font-size:12px}
+  .step{min-width:0;padding:4px 10px;border-radius:12px}
+  .step small{font-size:10px}
+  .step b{font-size:14px}
+  .goal{padding-block:10px 2px;gap:4px 12px}
+  .goal h2{font-size:22px}
+  .goal p{font-size:14px}
+  body.compact .goal p{display:none}
+  .tools{padding-block:6px 10px}
+  .solo{gap:8px}
+  .solo .pic{height:max(170px,calc(100vh - 560px))}
+  .solo .body{padding:8px 12px 2px}
+  .solo .body h3{font-size:21px}
+  .solo .meta{font-size:13px}
+  .solo .acts{padding:10px 10px 12px;gap:8px}
+  .solo .act{min-height:58px;font-size:16px}
+  .dockrow{padding-block:8px;gap:6px 10px}
+  .counts{font-size:16px;gap:10px}
+  .msg{order:5;flex-basis:100%;font-size:13px;min-width:0}
+  .go{padding:12px 16px;font-size:17px}
+  .undo{padding:9px 11px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<section id="pick" hidden>
+  <div class="inner wrap">
+    <div class="studs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <h1>Wymarzone zestawy</h1>
+    <p class="lead">Kto dziś wybiera? Każdy ma swoją listę i swoje pojedynki.</p>
+    <div class="kids">
+      <button class="kidbtn j" id="pick-jas" data-kid="jas"><span class="nm">Jaś</span><span class="st" id="st-jas"></span></button>
+      <button class="kidbtn a" id="pick-antek" data-kid="antek"><span class="nm">Antek</span><span class="st" id="st-antek"></span></button>
+    </div>
+    <form class="family" id="family" hidden>
+      <label for="family-code"><b>Kod rodzinny</b> – wpisz raz na tym urządzeniu, żeby postęp był wspólny na telefonach i tablecie.</label>
+      <div class="row"><input id="family-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX" maxlength="16"><button class="btn solid" type="submit">Zapisz</button></div>
+      <p class="note bad" id="family-note"></p>
+    </form>
+    <button class="linkbtn" id="open-settings-pick">Dla rodzica: jak to działa i ustawienia</button>
+  </div>
+</section>
+
+<section id="app" hidden>
+  <header class="top">
+    <div class="wrap">
+      <div class="toprow">
+        <div class="who"><span class="badge" id="kid-name">Jaś</span></div>
+        <div class="spacer"></div>
+        <span class="sync" id="sync" aria-live="polite">Łączę…</span>
+        <button class="iconbtn" id="sound" aria-pressed="true" title="Dźwięk włączony / wyłączony">🔊</button>
+        <button class="iconbtn" id="switch-kid" title="Wróć do wyboru dziecka">↩<span class="lbl"> Zmień dziecko</span></button>
+        <button class="iconbtn" id="open-settings" title="Dla rodzica">⚙<span class="lbl"> Rodzic</span></button>
+      </div>
+      <nav class="steps" id="steps" aria-label="Etapy"></nav>
+    </div>
+  </header>
+  <main class="wrap" id="main"></main>
+  <div class="dock" id="dock">
+    <div class="wrap dockrow">
+      <div class="counts" id="counts"></div>
+      <div class="msg" id="msg"></div>
+      <button class="undo" id="undo" disabled title="Cofnij ostatni ruch">↶ Cofnij</button>
+      <button class="go" id="go">Dalej →</button>
+    </div>
+  </div>
+</section>
+
+<dialog id="add">
+  <form class="dlg" id="add-form">
+    <div class="row"><h2>Dodaj zestaw</h2><div class="spacer"></div><button type="button" class="btn" id="close-add">Zamknij</button></div>
+    <p id="add-who"></p>
+    <div class="fields" style="grid-template-columns:1fr">
+      <label for="add-num">Numer zestawu (z pudełka albo ze strony LEGO)<input id="add-num" inputmode="numeric" autocomplete="off" maxlength="7" placeholder="np. 60471"></label>
+    </div>
+    <div id="add-preview"></div>
+    <div class="fields" style="grid-template-columns:1fr" id="add-name-wrap" hidden>
+      <label for="add-name">Nazwa (opcjonalnie)<input id="add-name" maxlength="80" autocomplete="off" placeholder="np. Ciężarówka strażacka"></label>
+    </div>
+    <div class="row"><button type="submit" class="btn solid" id="add-go" disabled>Dodaj</button></div>
+  </form>
+</dialog>
+
+<dialog id="settings">
+  <div class="dlg">
+    <div class="row"><h2>Dla rodzica</h2><div class="spacer"></div><button class="btn" id="close-settings">Zamknij</button></div>
+    <div>
+      <h3>Jak to działa</h3>
+      <ol class="howto">
+        <li><b>Przegląd:</b> każdy zestaw dostaje Super!, Może albo Nie.</li>
+        <li><b>Pojedynki:</b> Super i Może grają ze sobą parami. Super zaczyna z większą liczbą serduszek niż Może. Przegrana zabiera jedno serduszko, a zestaw bez serduszek odpada. Rywali dobiera się według wyniku, więc po porażce zestaw nie trafia znowu na faworyta.</li>
+        <li><b>Druga szansa:</b> zestaw, który przegrał tylko z finalistami, gra jeszcze raz o miejsce w finale. Odpadły zestaw można też wpuścić ręcznie przyciskiem „Jeszcze raz” w tabeli.</li>
+        <li><b>Wielki finał:</b> finaliści grają każdy z każdym. Wynik ustala kolejność, którą można potem poprawić strzałkami.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Ustawienia</h3>
+      <div class="fields" style="margin-top:6px">
+        <label for="fmin">Finał: co najmniej<input id="fmin" type="number" min="1" max="12" inputmode="numeric"></label>
+        <label for="fmax">Finał: najwyżej<input id="fmax" type="number" min="1" max="12" inputmode="numeric"></label>
+        <label for="livesS">Serduszka „Super”<input id="livesS" type="number" min="1" max="6" inputmode="numeric"></label>
+        <label for="livesM">Serduszka „Może”<input id="livesM" type="number" min="1" max="6" inputmode="numeric"></label>
+      </div>
+      <p class="note" id="limits-note"></p>
+    </div>
+    <div id="devices" hidden>
+      <h3>Inne urządzenia</h3>
+      <p>Otwórz ten link na telefonie lub tablecie – kod wpisze się sam i postęp będzie wspólny.</p>
+      <div class="linkcode" id="device-link"></div>
+      <div class="row" style="margin-top:8px"><button class="btn" id="copy-link">Kopiuj link</button><span class="note" id="copy-note"></span></div>
+    </div>
+    <div>
+      <h3>Zacznij od nowa</h3>
+      <p>Kasuje wybory jednego dziecka. Drugie zostaje bez zmian.</p>
+      <div class="row" style="margin-top:8px">
+        <button class="btn danger" data-reset="jas">Wyczyść wybory Jasia</button>
+        <button class="btn danger" data-reset="antek">Wyczyść wybory Antka</button>
+      </div>
+      <p class="note" id="reset-note"></p>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const DATA = __DATA__;
+const IMG = __IMG__;
+const CATALOG = __CATALOG__; // numer → [nazwa, seria, wiek, rok]
+document.body.dataset.kid = "jas";
+document.documentElement.lang = "pl";
+const SETS = Object.fromEntries(DATA.sets.map(s => [s.n, s]));
+const BASE = { jas: DATA.jas, antek: DATA.antek };
+const KIDNAME = { jas: "Jaś", antek: "Antek" };
+const KIDGEN = { jas: "Jasia", antek: "Antka" };
+const STAGES = ["Przegląd", "Pojedynki", "Wielki finał", "Lista marzeń"];
+const KEY = "lego-wybor-v2";
+
+/* ================= stan ================= */
+function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[] }; }
+function defaults(){ return { settings:{ fmin:3, fmax:5, livesS:3, livesM:2 }, kids:{ jas:blankKid(), antek:blankKid() } }; }
+const okNum = n => typeof n === "string" && /^\d{3,7}$/.test(n);
+function cleanKid(src){
+  const b = blankKid(); if (!src || typeof src !== "object") return b;
+  b.stage = Math.min(3, Math.max(0, src.stage|0));
+  if (src.review && typeof src.review === "object") for (const [n,v] of Object.entries(src.review)) if (okNum(n) && "SMN".includes(v) && v.length===1) b.review[n] = v;
+  if (Array.isArray(src.log)) b.log = src.log.filter(e => e && "drvf".includes(e.t) && e.t.length===1 && okNum(e.a) && (e.t==="v" || okNum(e.b)) && (e.w==null || e.w===e.a || e.w===e.b)).map(e => e.t==="v" ? {t:"v",a:e.a} : {t:e.t,a:e.a,b:e.b,w:e.w??null});
+  b.rank = Array.isArray(src.rank) ? src.rank.filter(okNum) : [];
+  b.done = !!src.done;
+  b.extra = Array.isArray(src.extra) ? src.extra.filter(e => e && okNum(e.n)).map(e => ({ n:e.n, name: typeof e.name==="string" ? e.name.slice(0,80) : "" })) : [];
+  return b;
+}
+function cleanSettings(s){
+  const d = defaults().settings; s = Object.assign({}, d, s||{});
+  for (const k of Object.keys(d)) s[k] = Math.max(1, Math.min(12, parseInt(s[k],10) || d[k]));
+  if (s.fmin > s.fmax) s.fmax = s.fmin;
+  return { fmin:s.fmin, fmax:s.fmax, livesS:s.livesS, livesM:s.livesM };
+}
+let state = defaults();
+try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas), antek:cleanKid(o.kids&&o.kids.antek) } }; } } catch(e){}
+
+/* ================= zapis =================
+   Od razu w przeglądarce (szybko), a w tle na wspólnym serwerze – osobny dokument dla każdego dziecka.
+   Serwer: na claude.ai baza artefaktu, na własnej stronie (Cloudflare) /api/state/<klucz> chronione kodem rodzinnym. */
+const ON_WEB = /^https?:$/.test(location.protocol) && !window.claude;
+let backend = null, dbState = "connecting";
+const dirty = new Set(); let flushTimer = null; const writing = {};
+function cache(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+function save(which){ cache(); dirty.add(which || kid || "settings"); clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
+async function flush(){
+  if (!backend) return;
+  for (const key of [...dirty]){
+    if (writing[key]) continue;
+    dirty.delete(key); writing[key] = true; setSync("saving");
+    const body = key==="settings" ? { settings: state.settings } : { v:2, kid: state.kids[key] };
+    try { await backend.set(key, JSON.parse(JSON.stringify(body))); setSync("ok"); }
+    catch(e){
+      if (e && e.code==="unavailable"){ dirty.add(key); setTimeout(flush, 2000 + Math.random()*2000); setSync("retry"); }
+      else if (e && e.code==="auth"){ dirty.add(key); authFailed(); }
+      else setSync("local");
+    }
+    writing[key] = false;
+  }
+  if (dirty.size && backend){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
+}
+function setSync(s){
+  if (s==="saving" || s==="ok") dbState = "ok";
+  if (s==="local" || s==="auth" || s==="retry") dbState = s;
+  const el = document.getElementById("sync"); if (!el) return;
+  el.textContent = s==="saving" ? "Zapisuję…" : ({ ok:"Zapisano ✓", local:"Zapis tylko na tym urządzeniu", auth:"Brak kodu rodzinnego – zapis tylko tutaj", retry:"Brak połączenia – ponawiam…", connecting:"Łączę…" })[dbState];
+}
+function claudeBackend(db){
+  return {
+    set: (k, b) => db.doc("progress/" + k).set(b),
+    listen: (k, cb, err) => db.doc("progress/" + k).onSnapshot(s => cb(s.exists ? s.data() : null, { fromCache: s.metadata.fromCache, pending: s.metadata.hasPendingWrites }), err)
+  };
+}
+function restBackend(code){
+  const ver = {};
+  async function call(method, k, body){
+    let r;
+    try { r = await fetch("/api/state/" + k, { method, cache:"no-store", headers:{ "content-type":"application/json", "x-family-code": code }, body: body ? JSON.stringify(body) : undefined }); }
+    catch(e){ throw { code:"unavailable" }; }
+    if (r.status===401) throw { code:"auth" };
+    if (r.status===404) return null;
+    if (!r.ok) throw { code:"unavailable" };
+    return r.json();
+  }
+  return {
+    set: async (k, b) => { const r = await call("PUT", k, b); ver[k] = Math.max(ver[k] ?? 0, r.version); },
+    listen: (k, cb, err) => {
+      let dead = false, inflight = false;
+      const tick = async () => {
+        if (dead || inflight || document.visibilityState!=="visible") return;
+        inflight = true;
+        try {
+          const r = await call("GET", k); const v = r ? r.version : 0;
+          if (v > (ver[k] ?? -1)){ ver[k] = v; cb(r ? r.data : null, { fromCache:false, pending:false }); }
+          else if (dbState==="retry") setSync("ok");
+        } catch(e){ if (e.code==="auth"){ dead = true; err(e); } else setSync("retry"); }
+        inflight = false;
+      };
+      tick(); setInterval(tick, 4000);
+      document.addEventListener("visibilitychange", tick); window.addEventListener("focus", tick);
+    }
+  };
+}
+function onRemote(key, d, meta, firstRef){
+  if (!meta.fromCache && dbState!=="ok") setSync("ok");
+  if (meta.pending || writing[key] || dirty.has(key)) return;
+  const usable = d && (key==="settings" ? !!d.settings : d.v===2 && !!d.kid);
+  if (!usable){
+    // pierwszy start: przenieś na serwer to, co było zapisane na tym urządzeniu
+    if (firstRef.first && !meta.fromCache){ firstRef.first = false; const has = key==="settings" || Object.keys(state.kids[key].review).length; if (has) save(key); }
+    return;
+  }
+  firstRef.first = false;
+  const before = JSON.stringify(key==="settings" ? state.settings : state.kids[key]);
+  if (key==="settings") state.settings = cleanSettings(d.settings); else state.kids[key] = cleanKid(d.kid);
+  cache();
+  if (before !== JSON.stringify(key==="settings" ? state.settings : state.kids[key]) && !busy){ if (kid) render(); else showPick(); }
+}
+/* kod rodzinny (tylko na własnej stronie) */
+const ALPH = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+function normCode(x){ return String(x||"").toUpperCase().replace(/[^0-9A-Z]/g,""); }
+function codeOk(c){
+  if (!/^[2-9A-HJKMNP-Z]{12}$/.test(c)) return false;
+  let s = 0; for (let i=0;i<10;i++) s += (i+1) * ALPH.indexOf(c[i]);
+  return c[10]===ALPH[s % 31] && c[11]===ALPH[(s*7+3) % 31];
+}
+function prettyCode(c){ return c.slice(0,4)+"-"+c.slice(4,8)+"-"+c.slice(8); }
+function familyCode(){
+  const m = location.hash.match(/kod=([0-9A-Za-z-]{12,20})/);
+  if (m){ history.replaceState(null, "", location.pathname + location.search); const c = normCode(m[1]); if (codeOk(c)){ try { localStorage.setItem("lego-family-code", c); } catch(e){} return c; } }
+  try { const c = normCode(localStorage.getItem("lego-family-code")); return codeOk(c) ? c : ""; } catch(e){ return ""; }
+}
+let currentCode = "";
+function showFamily(msg){
+  const f = document.getElementById("family"); f.hidden = false;
+  document.getElementById("family-note").textContent = msg || "";
+}
+function authFailed(){
+  backend = null; try { localStorage.removeItem("lego-family-code"); } catch(e){}
+  setSync("auth"); showFamily("Ten kod nie pasuje. Sprawdź go i wpisz jeszcze raz.");
+}
+async function connectDb(){
+  const timer = setTimeout(() => { if (dbState==="connecting") setSync("local"); }, 10000);
+  let cdb = null;
+  if (window.claude){ try { cdb = await window.claude.use("db"); } catch(e){ cdb = null; } }
+  if (cdb) backend = claudeBackend(cdb);
+  else if (ON_WEB){
+    const code = familyCode();
+    if (!code){ clearTimeout(timer); setSync("auth"); showFamily(); return; }
+    currentCode = code; backend = restBackend(code);
+  }
+  if (!backend){ clearTimeout(timer); setSync("local"); return; }
+  document.getElementById("family").hidden = true;
+  for (const key of ["jas","antek","settings"]){
+    const firstRef = { first:true };
+    backend.listen(key, (d, meta) => { if (!meta.fromCache) clearTimeout(timer); onRemote(key, d, meta, firstRef); },
+      e => { if (e && e.code==="auth") authFailed(); else setSync("local"); });
+  }
+  flush();
+}
+
+/* ================= dane zestawów ================= */
+function listOf(k){ const b = BASE[k]; const ex = state.kids[k].extra.map(e => e.n).filter(n => !b.includes(n)); return ex.length ? b.concat(ex) : b; }
+function getSet(n){
+  if (SETS[n]) return SETS[n];
+  const c = CATALOG[n]; let own = "";
+  for (const k of ["jas","antek"]) for (const e of state.kids[k].extra) if (e.n===n && e.name) own = e.name;
+  return SETS[n] = c ? { n, name:c[0], theme:c[1], age:c[2]||null, year:c[3]||null, added:true } : { n, name:own, theme:"Dodane", added:true, unknown:true };
+}
+function esc(x){ return String(x).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]); }
+function title(s){ return esc(s.name || ("Zestaw " + s.n)); }
+function metaLine(s){
+  if (s.unknown) return "Brak w katalogu – sprawdź numer";
+  const bits = [s.theme]; if (s.age) bits.push("od " + s.age + " lat"); if (s.pcs) bits.push(s.pcs.toLocaleString("pl-PL") + " el.");
+  return esc(bits.join(" · "));
+}
+function picHTML(s, withNum=true){
+  const src = IMG[s.n];
+  return `<div class="pic">${src?`<img alt="" decoding="async" src="${src}">`:`<span class="ph"><span>${s.n}<small>brak zdjęcia</small></span></span>`}${withNum?`<span class="num">${s.n}</span>`:""}${s.unknown?'<span class="flag">numer do sprawdzenia</span>':s.added?'<span class="flag added">dodany</span>':""}</div>`;
+}
+function plz(n){ const a=n%10,b=n%100; return n===1?"zestaw":(a>=2&&a<=4&&!(b>=12&&b<=14))?"zestawy":"zestawów"; }
+const ICON_HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.1 4.6 2.6.2.3.6.3.8 0 1-1.5 2.5-2.6 4.6-2.6 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>';
+const ICON_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>';
+
+/* ================= silnik pojedynków =================
+   Cały stan pojedynków wynika z dziennika (log) – cofanie to usunięcie ostatniego wpisu.
+   d = zwykły pojedynek, r = druga szansa, v = ręczne „jeszcze raz”, f = wielki finał (każdy z każdym). */
+function hash(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function engine(k){
+  const ks = state.kids[k], S = state.settings, list = listOf(k);
+  const idx = Object.fromEntries(list.map((n,i)=>[n,i]));
+  const entrants = list.filter(n => ks.review[n]==="S" || ks.review[n]==="M");
+  const inE = new Set(entrants);
+  const lives={}, wins={}, losses={}, played={}, lostTo={}, met={}, chance=new Set(), streak={};
+  for (const n of entrants){ lives[n] = ks.review[n]==="S" ? S.livesS : S.livesM; wins[n]=0; losses[n]=0; played[n]=0; lostTo[n]=[]; streak[n]=0; }
+  const key2 = (a,b) => a<b ? a+"|"+b : b+"|"+a;
+  let duelCount = 0;
+  for (const e of ks.log){
+    if (e.t==="v"){ if (inE.has(e.a)) lives[e.a] = Math.max(0, lives[e.a]) + 1; continue; }
+    if (!inE.has(e.a) || !inE.has(e.b)) continue;
+    if (e.w){ const l = e.w===e.a ? e.b : e.a; streak[e.w]++; streak[l] = 0; }
+    if (e.t==="f") continue;
+    duelCount++; played[e.a]++; played[e.b]++; met[key2(e.a,e.b)] = (met[key2(e.a,e.b)]||0) + 1;
+    if (e.t==="r"){
+      chance.add(e.a);
+      if (e.w===e.a){ lives[e.a] = 1; lives[e.b]--; wins[e.a]++; losses[e.b]++; lostTo[e.b].push(e.a); }
+      else if (e.w===e.b){ wins[e.b]++; losses[e.a]++; }
+      continue;
+    }
+    if (!e.w) continue;
+    const l = e.w===e.a ? e.b : e.a;
+    wins[e.w]++; losses[l]++; lostTo[l].push(e.w); lives[l]--;
+  }
+  const alive = entrants.filter(n => lives[n] > 0);
+  const out = entrants.filter(n => lives[n] <= 0);
+  const strength = n => lives[n]*10 + wins[n] - losses[n]*0.5;
+  let next = null, phaseDone = false, candidates = [];
+  if (entrants.length >= S.fmin){
+    if (alive.length > S.fmax){
+      // zestaw z najmniejszą liczbą pojedynków; rywal o podobnym wyniku, z którym jeszcze nie grał
+      const seed = String(duelCount);
+      const a = alive.slice().sort((x,y) => played[x]-played[y] || hash(x+seed)-hash(y+seed))[0];
+      const b = alive.filter(n => n!==a).map(n => ({ n, c: (met[key2(a,n)]||0)*100 + Math.abs(lives[n]-lives[a])*10 + Math.abs(wins[n]-wins[a]) + played[n]*0.3 + (hash(n+a+seed)%100)/1000 }))
+        .sort((x,y) => x.c-y.c)[0].n;
+      next = hash(a+b+seed)%2 ? {t:"d", a, b} : {t:"d", a:b, b:a};
+    } else {
+      candidates = out.filter(n => !chance.has(n) && lostTo[n].length && lostTo[n].every(w => lives[w] > 0))
+        .sort((x,y) => wins[y]-wins[x] || losses[x]-losses[y] || idx[x]-idx[y]);
+      if (candidates.length && alive.length){
+        const weakest = alive.slice().sort((x,y) => strength(x)-strength(y) || idx[y]-idx[x])[0];
+        next = {t:"r", a:candidates[0], b:weakest};
+      } else phaseDone = alive.length >= S.fmin || (alive.length>0 && alive.length===entrants.length);
+    }
+  }
+  // wielki finał
+  let finalists = [], fpairs = [], fres = {}, fnext = null, fwins = {}, fdone = false;
+  if (phaseDone){
+    finalists = alive.slice().sort((x,y) => idx[x]-idx[y]);
+    for (let i=0;i<finalists.length;i++) for (let j=i+1;j<finalists.length;j++) fpairs.push([finalists[i], finalists[j]]);
+    const fin = new Set(finalists);
+    for (const e of ks.log) if (e.t==="f" && fin.has(e.a) && fin.has(e.b)) fres[key2(e.a,e.b)] = e.w || "-";
+    finalists.forEach(n => fwins[n] = 0);
+    for (const [a,b] of fpairs){ const r = fres[key2(a,b)]; if (!r) continue; if (r==="-"){ fwins[a]+=.5; fwins[b]+=.5; } else fwins[r]++; }
+    // kolejność pojedynków finału przeplatana, żeby ten sam zestaw nie grał kilka razy z rzędu
+    const order = fpairs.map((p,i) => ({p, k: (i*7) % Math.max(1,fpairs.length)})).sort((x,y)=>x.k-y.k).map(x=>x.p);
+    const todo = order.find(([a,b]) => !fres[key2(a,b)]);
+    if (todo){ const [a,b] = todo; fnext = hash(a+b)%2 ? {t:"f",a,b} : {t:"f",a:b,b:a}; } else fdone = true;
+  }
+  const h2h = (a,b) => { const r = fres[key2(a,b)]; return r===a ? -1 : r===b ? 1 : 0; };
+  const ranking = finalists.slice().sort((x,y) => fwins[y]-fwins[x] || h2h(x,y) || lives[y]-lives[x] || wins[y]-wins[x] || idx[x]-idx[y]);
+  return { streak, entrants, alive, out, lives, wins, losses, played, lostTo, chance, next, phaseDone, candidates, finalists, fpairs, fres, fnext, fwins, fdone, ranking, duelCount, key2 };
+}
+
+/* ================= UI ================= */
+let kid = null, view = "solo", filter = "all", theme = "", cursor = 0, undoStack = [], armed = false, busy = false, editRank = false;
+const K = () => state.kids[kid];
+const S = () => state.settings;
+function reviewCounts(){ const c = {S:0,M:0,N:0,U:0,total:0}; for (const n of listOf(kid)){ c[K().review[n]||"U"]++; c.total++; } return c; }
+function maxStage(E){ if (E.entrants.length < S().fmin) return 0; if (!E.phaseDone) return 1; if (!E.fdone) return 2; return 3; }
+
+function kidSummary(k){
+  const prev = kid; kid = k; const ks = K(); const E = engine(k); let t;
+  const st = Math.min(ks.stage, maxStage(E));
+  if (st===0){ const c = reviewCounts(); t = c.U===c.total ? c.total + " " + plz(c.total) + " do obejrzenia" : `Przegląd: obejrzane ${c.total-c.U} z ${c.total}`; }
+  else if (st===1) t = `Pojedynki: w grze ${E.alive.length}`;
+  else if (st===2) t = `Wielki finał: ${E.fpairs.length - E.fpairs.filter(([a,b])=>!E.fres[E.key2(a,b)]).length} z ${E.fpairs.length}`;
+  else t = ks.done ? `Lista gotowa: ${E.finalists.length} ${plz(E.finalists.length)}` : "Lista marzeń";
+  kid = prev; return t;
+}
+function showPick(){
+  kid = null;
+  document.getElementById("st-jas").textContent = kidSummary("jas");
+  document.getElementById("st-antek").textContent = kidSummary("antek");
+  document.getElementById("pick").hidden = false; document.getElementById("app").hidden = true;
+}
+function openKid(k){
+  kid = k; document.body.dataset.kid = k;
+  undoStack = []; filter = "all"; theme = ""; cursor = 0; armed = false; editRank = false; run = 0;
+  const c = reviewCounts(); view = c.U>0 ? "solo" : "grid";
+  document.getElementById("kid-name").textContent = KIDNAME[k];
+  document.getElementById("pick").hidden = true; document.getElementById("app").hidden = false;
+  render(); window.scrollTo(0,0);
+}
+function render(){
+  const E = engine(kid); const ks = K();
+  const ms = maxStage(E); if (ks.stage > ms) ks.stage = ms;
+  document.getElementById("steps").innerHTML = STAGES.map((nm,i) =>
+    `<button class="step ${i<ks.stage || (i===3 && ks.done) ? "done":""}" data-step="${i}" ${i<=ms?"":"disabled"} ${i===ks.stage?'aria-current="step"':""}><small>Etap ${i+1}</small><b>${nm}</b></button>`).join("");
+  document.body.classList.toggle("compact", ks.stage===1 || ks.stage===2 || (ks.stage===0 && view==="solo"));
+  [renderReview, renderDuels, renderFinal, renderList][ks.stage](E);
+  renderDock(E);
+}
+
+/* ---------- etap 1: przegląd ---------- */
+function renderReview(){
+  const c = reviewCounts(); const main = document.getElementById("main");
+  const themes = {}; for (const n of listOf(kid)) { const t = getSet(n).theme || "Inne"; themes[t] = (themes[t]||0)+1; }
+  if (theme && !themes[theme]) theme = "";
+  const filters = [["all","Wszystkie",c.total],["U","Do obejrzenia",c.U],["S","❤ Super",c.S],["M","? Może",c.M],["N","✕ Nie",c.N]];
+  main.innerHTML = `
+    <div class="goal"><h2>Przegląd</h2><p>Przy każdym zestawie wybierz: <b>Super!</b> – bardzo chcę, <b>Może</b> – fajny, ale nie jestem pewien, <b>Nie</b> – nie chcę. Super i Może idą do pojedynków.</p></div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Widok">
+        <button data-view="solo" aria-pressed="${view==="solo"}">Po kolei</button>
+        <button data-view="grid" aria-pressed="${view==="grid"}">Wszystkie naraz</button>
+      </div>
+      <button class="iconbtn" id="open-add">＋ Dodaj zestaw</button>
+      ${view==="grid" ? `<div class="chips" role="group" aria-label="Pokaż">${filters.map(([k,l,n]) => `<button class="chip" data-filter="${k}" aria-pressed="${filter===k}">${l}<span class="c">${n}</span></button>`).join("")}</div>` : ""}
+    </div>
+    ${view==="grid" && Object.keys(themes).length>1 ? `<div class="tools"><div class="chips" role="group" aria-label="Seria">
+      <button class="chip" data-theme="" aria-pressed="${theme===""}">Każda seria</button>
+      ${Object.entries(themes).sort((a,b)=>b[1]-a[1]).map(([t,n]) => `<button class="chip" data-theme="${esc(t)}" aria-pressed="${theme===t}">${esc(t)}<span class="c">${n}</span></button>`).join("")}
+    </div></div>` : ""}
+    <div id="cards"></div>`;
+  view==="grid" ? renderGrid() : renderSolo();
+}
+function rstat(n){ return K().review[n] || "U"; }
+function cardHTML(n, solo=false){
+  const s = getSet(n), st = rstat(n);
+  return `<article class="card" data-n="${n}" data-st="${st}">${picHTML(s)}
+    <div class="body"><h3>${title(s)}</h3><div class="meta">${solo?`Nr ${s.n} · `:""}${metaLine(s)}</div></div>
+    <div class="acts">
+      <button class="act no" data-dec="N" data-n="${n}" aria-pressed="${st==="N"}">${ICON_X}<span class="t">Nie</span></button>
+      <button class="act maybe" data-dec="M" data-n="${n}" aria-pressed="${st==="M"}"><span class="q" aria-hidden="true">?</span><span class="t">Może</span></button>
+      <button class="act yes" data-dec="S" data-n="${n}" aria-pressed="${st==="S"}">${ICON_HEART}<span class="t">Super!</span></button>
+    </div></article>`;
+}
+function renderGrid(){
+  let list = listOf(kid).filter(n => filter==="all" || rstat(n)===filter);
+  if (theme) list = list.filter(n => (getSet(n).theme||"Inne")===theme);
+  const box = document.getElementById("cards"); box.className = "grid";
+  box.innerHTML = list.length ? list.map(n => cardHTML(n)).join("") : `<div class="empty">${filter==="U" ? "Wszystko obejrzane!" : "Brak zestawów w tym widoku."}</div>`;
+}
+function renderSolo(){
+  const box = document.getElementById("cards"); box.className = "solo";
+  const q = listOf(kid).filter(n => rstat(n)==="U"); const c = reviewCounts();
+  if (!q.length){
+    box.innerHTML = `<div class="big-done">Wszystko obejrzane!</div><div class="nav">Super: ${c.S} · Może: ${c.M}. Możesz jeszcze wszystko przejrzeć albo iść do pojedynków.</div><button class="go" data-view="grid">Pokaż wszystkie</button>`;
+    return;
+  }
+  cursor = ((cursor % q.length) + q.length) % q.length;
+  const done = c.total - c.U;
+  box.innerHTML = `<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/c.total)}%"></i></div>
+    <div class="nav">Obejrzane: ${done} z ${c.total}</div>
+    ${cardHTML(q[cursor], true)}
+    <div class="nav"><button class="iconbtn" data-move="-1">← Poprzedni</button><button class="iconbtn" data-move="1">Pomiń na razie →</button></div>`;
+}
+function decide(n, d){
+  const ks = K(); const prev = ks.review[n];
+  const next = prev===d ? undefined : d;
+  if (next) sfx.pick(next);
+  undoStack.push({n, prev});
+  if (next===undefined) delete ks.review[n]; else ks.review[n] = next;
+  ks.done = false; armed = false; save();
+  if (view==="solo") return render();
+  const el = document.querySelector(`.card[data-n="${n}"]`); const st = rstat(n);
+  if (el){ if (filter!=="all" && filter!==st){ el.style.opacity="0"; setTimeout(render, 160); return renderDock(engine(kid)); }
+    el.dataset.st = st; el.querySelectorAll(".act").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.dec===st))); }
+  const c = reviewCounts(); const map = {all:c.total,U:c.U,S:c.S,M:c.M,N:c.N};
+  document.querySelectorAll("[data-filter]").forEach(b => { const s=b.querySelector(".c"); if (s) s.textContent = map[b.dataset.filter]; });
+  renderDock(engine(kid));
+}
+
+/* ---------- etap 2: pojedynki ---------- */
+function livesHTML(n, E){
+  const max = Math.max(S().livesS, S().livesM, E.lives[n]);
+  let h = ""; for (let i=0;i<max;i++) h += `<span class="${i<E.lives[n]?"on":"off"}">♥</span>`;
+  return `<div class="lives" aria-label="Serduszka: ${E.lives[n]}">${h}</div>`;
+}
+function pickHTML(n, side, E, showLives=true){
+  const s = getSet(n);
+  return `<button class="pick" data-win="${n}" data-side="${side}">${picHTML(s)}<div class="body"><h3>${title(s)}</h3><div class="meta">${metaLine(s)}</div>${showLives?livesHTML(n,E):""}${E.streak[n]>=2?`<div class="streak">🔥 ${E.streak[n]} wygrane z rzędu</div>`:""}</div></button>`;
+}
+function renderDuels(E){
+  const main = document.getElementById("main"); const nx = E.next;
+  let inner;
+  if (nx){
+    const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.a))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
+    inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>
+      <button class="skip" id="skip">Nie umiem wybrać – następna para</button>`;
+  } else {
+    inner = `<div class="big-done">Mamy finalistów! 🏆</div><div class="nav">Do wielkiego finału wchodzi ${E.alive.length} ${plz(E.alive.length)}. Tam każdy zagra z każdym.</div>`;
+  }
+  main.innerHTML = `<div class="goal"><h2>${nx ? "Który bardziej?" : "Koniec pojedynków"}</h2><p>Dotknij zestawu, który bardziej chcesz. Przegrany traci jedno serduszko, a bez serduszek odpada. Super zaczyna z ${S().livesS}, Może z ${S().livesM}.</p></div>
+    <div class="duel">${inner}${tableHTML(E)}</div>`;
+}
+function tableHTML(E){
+  const byStrength = (x,y) => E.lives[y]-E.lives[x] || E.wins[y]-E.wins[x] || E.losses[x]-E.losses[y];
+  const alive = E.alive.slice().sort(byStrength);
+  const out = E.out.slice().sort((x,y) => E.wins[y]-E.wins[x] || E.losses[x]-E.losses[y]);
+  const row = (n, isOut) => { const s = getSet(n);
+    return `<div class="trow ${isOut?"out":""}">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${title(s)}</div>
+      <div class="sub">${isOut ? `odpadł · wygrane: ${E.wins[n]}` : `${"♥".repeat(Math.max(0,E.lives[n]))} · wygrane: ${E.wins[n]}`}${E.played[n]===0?" · jeszcze nie grał":""}</div></div>
+      ${isOut ? `<button class="mini" data-revive="${n}" title="Wpuść ten zestaw z jednym serduszkiem">Jeszcze raz</button>` : "<span></span>"}</div>`; };
+  return `<details class="table"><summary>Tabela: w grze ${alive.length}${out.length?`, odpadło ${out.length}`:""}</summary><div class="trows">
+    <div class="tsec">W grze</div>${alive.map(n=>row(n,false)).join("")}
+    ${out.length ? `<div class="tsec">Odpadły</div>${out.map(n=>row(n,true)).join("")}` : ""}</div></details>`;
+}
+let run = 0; // pojedynki rozegrane bez przerwy w tym podejściu
+const MILESTONES = { 10:"10 pojedynków! Super ci idzie!", 25:"25 pojedynków! Mistrz wyboru!", 50:"50 pojedynków! Niesamowite!", 75:"75 pojedynków! Legenda!", 100:"100 pojedynków! Rekord!" };
+const BURST = ["var(--heart)","var(--stud)","#1d6bd0","#e46a0a","#178a4a","#8e44c9"];
+function playDuel(winner){
+  if (busy) return; const E = engine(kid); const st = K().stage; const nx = st===2 ? E.fnext : E.next; if (!nx) return;
+  busy = true;
+  const loser = winner===nx.a ? nx.b : nx.a;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wEl = document.querySelector(`.pick[data-win="${winner}"]`), lEl = document.querySelector(`.pick[data-win="${loser}"]`);
+  wEl.classList.add("win"); lEl.classList.add("lose");
+  const ns = (E.streak[winner]||0) + 1;
+  const comeback = nx.t==="r" && winner===nx.a;
+  stamp(wEl, comeback ? "Wraca do gry!" : ns>=3 ? `🔥 ${ns} z rzędu!` : "Wygrywa!", "");
+  if (st===1 && !(nx.t==="r" && loser===nx.a)){
+    const hearts = lEl.querySelectorAll(".lives .on"); const h = hearts[hearts.length-1];
+    if (h){ h.classList.add("falling"); }
+    if (E.lives[loser] - 1 <= 0) stamp(lEl, "Odpada!", "bad");
+  }
+  if (!reduce) burst(wEl);
+  if (comeback) sfx.comeback(); else if (ns>=3) sfx.streak(ns); else sfx.win();
+  if (st===1 && !(nx.t==="r" && loser===nx.a)) setTimeout(() => (E.lives[loser]-1 <= 0 ? sfx.out() : sfx.lose()), 380);
+  run++;
+  setTimeout(() => {
+    K().log.push({ t:nx.t, a:nx.a, b:nx.b, w:winner }); K().done = false; save(); busy = false; render();
+    if (MILESTONES[run]){ toast("⚡ " + MILESTONES[run]); sfx.fanfare(); }
+  }, reduce ? 250 : 1000);
+}
+function stamp(el, text, cls){ const s = document.createElement("span"); s.className = "stamp " + cls; s.textContent = text; el.appendChild(s); }
+function burst(el){
+  const b = document.createElement("div"); b.className = "burst";
+  for (let i=0;i<18;i++){
+    const a = (Math.PI*2*i/18) + Math.random()*.4, d = 90 + Math.random()*110;
+    const p = document.createElement("i");
+    p.style.setProperty("--c", BURST[i % BURST.length]);
+    p.style.setProperty("--dx", Math.cos(a)*d + "px"); p.style.setProperty("--dy", Math.sin(a)*d - 40 + "px");
+    p.style.setProperty("--r", (Math.random()*720-360) + "deg");
+    b.appendChild(p);
+  }
+  const host = el.parentElement; // .pair – klocki mogą wylecieć poza kartę
+  b.style.left = (el.offsetLeft + el.offsetWidth/2) + "px"; b.style.top = (el.offsetTop + el.offsetHeight*0.4) + "px";
+  host.appendChild(b);
+}
+function toast(text){ const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+function skipDuel(){
+  const E = engine(kid); const nx = K().stage===2 ? E.fnext : E.next; if (!nx || busy) return;
+  K().log.push({ t:nx.t, a:nx.a, b:nx.b, w:null }); save(); sfx.skip(); render();
+}
+
+/* ---------- etap 3: wielki finał ---------- */
+function renderFinal(E){
+  const main = document.getElementById("main"); const nx = E.fnext;
+  const done = E.fpairs.length - E.fpairs.filter(([a,b]) => !E.fres[E.key2(a,b)]).length;
+  const standings = E.ranking.map((n,i) => { const s = getSet(n); return `<div class="trow">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${i+1}. ${title(s)}</div><div class="sub">wygrane w finale: ${String(E.fwins[n]).replace(".5","½")}</div></div><span></span></div>`; }).join("");
+  main.innerHTML = `<div class="goal"><h2>${nx ? "Wielki finał: który bardziej?" : "Finał rozegrany!"}</h2><p>Każdy finalista gra z każdym. Najwięcej wygranych = największe marzenie.</p></div>
+    <div class="duel">
+      <div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/Math.max(1,E.fpairs.length))}%"></i></div>
+      <div class="nav">Pojedynek ${Math.min(done+1, E.fpairs.length)} z ${E.fpairs.length}</div>
+      ${nx ? `<div class="pair">${pickHTML(nx.a,"L",E,false)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E,false)}</div>
+        <button class="skip" id="skip">Tak samo – remis</button>` : `<div class="big-done">🏆</div>`}
+      <details class="table" ${nx?"":"open"}><summary>Wyniki finału</summary><div class="trows">${standings}</div></details>
+    </div>`;
+}
+
+/* ---------- etap 4: lista marzeń ---------- */
+function listOrder(E){
+  const fin = E.finalists; const ks = K();
+  const same = ks.rank.length===fin.length && fin.every(n => ks.rank.includes(n));
+  return same ? ks.rank.slice() : E.ranking.slice();
+}
+function renderList(E){
+  const order = listOrder(E); const ks = K(); const fixed = ks.done && !editRank;
+  const near = E.out.slice().sort((x,y) => E.wins[y]-E.wins[x] || E.losses[x]-E.losses[y]).slice(0,3);
+  document.getElementById("main").innerHTML = `
+    <div class="final-head"><h2>${fixed ? "Lista marzeń " + KIDGEN[kid] : "Ustaw kolejność"}</h2>
+      ${fixed ? `<button class="iconbtn" id="edit-rank">Zmień kolejność</button>` : ""}</div>
+    <ol class="rank">${order.map((n,i) => { const s = getSet(n); return `<li class="ritem"><span class="pos">${i+1}</span>${picHTML(s,false)}
+      <div style="min-width:0"><h3>${title(s)}</h3><div class="meta">Nr ${s.n} · ${metaLine(s)}</div>
+      <div class="links"><a href="https://www.lego.com/pl-pl/search?q=${s.n}" target="_blank" rel="noopener">LEGO.com</a><a href="https://brickset.com/sets/${s.n}-1" target="_blank" rel="noopener">Brickset</a></div></div>
+      ${fixed ? "" : `<div class="mv"><button data-up="${i}" ${i===0?"disabled":""} aria-label="W górę">▲</button><button data-down="${i}" ${i===order.length-1?"disabled":""} aria-label="W dół">▼</button></div>`}</li>`; }).join("")}</ol>
+    ${near.length ? `<div class="near"><h3>Tuż za finałem</h3><div class="trows" style="padding:0">${near.map(n => { const s = getSet(n); return `<div class="trow out">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${title(s)}</div><div class="sub">Nr ${s.n} · wygrane: ${E.wins[n]}</div></div><span></span></div>`; }).join("")}</div></div>` : `<div class="near"></div>`}`;
+}
+function moveRank(i, d){ const E = engine(kid); const r = listOrder(E); const j = i+d; if (j<0||j>=r.length) return; [r[i],r[j]] = [r[j],r[i]]; K().rank = r; save(); render(); }
+
+/* ---------- dolny pasek ---------- */
+function renderDock(E){
+  const ks = K(); const st = ks.stage; const counts = document.getElementById("counts"), msg = document.getElementById("msg"), go = document.getElementById("go");
+  let text = "", good = false, can = false, label = "Dalej →";
+  if (st===0){
+    const c = reviewCounts();
+    counts.innerHTML = `<span class="s" title="Super">❤ ${c.S}</span><span class="m" title="Może">? ${c.M}</span><span class="n" title="Nie">✕ ${c.N}</span><span class="u" title="Do obejrzenia">· ${c.U}</span>`;
+    label = "Pojedynki →";
+    if (c.S + c.M < S().fmin) text = `Wybierz co najmniej ${S().fmin} Super albo Może.`;
+    else { can = true;
+      text = c.U ? `Zostało ${c.U} do obejrzenia.` : `${c.S + c.M} ${plz(c.S+c.M)} idzie do pojedynków.`; good = !c.U;
+      if (armed && c.U) { text = `${c.U} ${plz(c.U)} bez wyboru nie zagra w pojedynkach. Kliknij jeszcze raz, żeby iść dalej.`; good = false; } }
+  } else if (st===1){
+    counts.innerHTML = `<span class="s">W grze: ${E.alive.length}</span><span class="u">cel: ${S().fmax}</span>${run?`<span class="run" title="Pojedynki bez przerwy">⚡ ${run}</span>`:""}`;
+    label = "Wielki finał →";
+    if (E.phaseDone){ can = true; good = true; text = "Mamy finalistów!"; }
+    else if (E.next && E.next.t==="r") text = "Druga szansa dla zestawu, który przegrał tylko z finalistami.";
+    else text = `Pojedynek ${E.duelCount+1}. Odpadną jeszcze ${Math.max(0, E.alive.length - S().fmax)}.`;
+  } else if (st===2){
+    const left = E.fpairs.filter(([a,b]) => !E.fres[E.key2(a,b)]).length;
+    counts.innerHTML = `<span class="s">Finał: ${E.finalists.length}</span>${run?`<span class="run" title="Pojedynki bez przerwy">⚡ ${run}</span>`:""}`;
+    label = "Lista marzeń →";
+    if (E.fdone){ can = true; good = true; text = "Finał rozegrany!"; } else text = `Zostało ${left} ${left===1?"pojedynek":left<5&&left>1?"pojedynki":"pojedynków"}.`;
+  } else {
+    counts.innerHTML = `<span class="s">❤ ${E.finalists.length}</span>`;
+    if (ks.done && !editRank){ text = "Lista gotowa. Można ją pokazać rodzicom!"; good = true; label = "Gotowe ✓"; can = false; }
+    else { text = "Kolejność ustawił finał. Możesz ją poprawić strzałkami."; good = true; can = true; label = "Gotowe ✓"; }
+  }
+  msg.textContent = text; msg.className = "msg" + (good ? " good" : ""); go.textContent = label; go.disabled = !can;
+  document.getElementById("undo").disabled = st===0 ? !undoStack.length : st===3 ? true : !lastLogIndex(st);
+}
+function lastLogIndex(st){ const log = K().log; for (let i=log.length-1;i>=0;i--){ const t = log[i].t; if (st===2 ? t==="f" : t!=="f") return i+1; } return 0; }
+function undo(){
+  const ks = K(); const st = ks.stage; sfx.undo();
+  if (st===0){ const u = undoStack.pop(); if (!u) return; if (u.prev===undefined) delete ks.review[u.n]; else ks.review[u.n] = u.prev; save(); return render(); }
+  const i = lastLogIndex(st); if (!i) return; if (ks.log[i-1].w && run) run--; ks.log.splice(i-1, 1); ks.done = false; save(); render();
+}
+function advance(){
+  const ks = K(); const E = engine(kid); const st = ks.stage;
+  if (st===0){ const c = reviewCounts(); if (c.U && !armed){ armed = true; return renderDock(E); } armed = false; }
+  if (st===3){ ks.rank = listOrder(E); ks.done = true; editRank = false; save(); sfx.fanfare(); return render(); }
+  if (st+1 > maxStage(E)) return;
+  ks.stage = st+1; save(); if (st===1) sfx.fanfare(); render(); window.scrollTo(0,0);
+}
+function goStage(i){ const E = engine(kid); if (i > maxStage(E)) return; K().stage = i; armed = false; editRank = false; save(); render(); window.scrollTo(0,0); }
+function revive(n){ K().log.push({t:"v", a:n}); K().done = false; save(); render(); }
+
+/* ---------- dźwięk (syntezowany w przeglądarce, bez plików) ---------- */
+let soundOn = true; try { soundOn = localStorage.getItem("lego-sound") !== "off"; } catch(e){}
+let actx = null;
+function ac(){ if (!soundOn) return null; try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state==="suspended") actx.resume(); return actx; } catch(e){ return null; } }
+function tone(f, at, dur, type="triangle", vol=.18, slideTo=null){
+  const c = ac(); if (!c) return; const t0 = c.currentTime + at;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t0); if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + dur + .05);
+}
+const sfx = {
+  win(){ [523,659,784].forEach((f,i) => tone(f, i*.07, .22, "square", .08)); tone(1047, .21, .35, "triangle", .14); },
+  streak(n){ const base = [523,659,784,1047,1319]; base.forEach((f,i) => tone(f*(1+Math.min(n,8)*.03), i*.055, .2, "square", .07)); tone(2093, .3, .4, "sine", .08); tone(2637, .38, .35, "sine", .06); },
+  comeback(){ tone(330, 0, .35, "sawtooth", .07, 990); [784,988,1175].forEach((f,i) => tone(f, .32 + i*.08, .25, "square", .07)); },
+  lose(){ tone(392, .05, .28, "triangle", .12, 260); },
+  out(){ tone(330, .05, .2, "square", .07); tone(247, .25, .22, "square", .07); tone(196, .48, .45, "square", .07, 130); },
+  pick(kind){ if (kind==="S"){ tone(660, 0, .1, "triangle", .14); tone(990, .07, .14, "triangle", .12); }
+    else if (kind==="M") tone(520, 0, .14, "triangle", .1);
+    else tone(220, 0, .12, "sine", .16, 150); },
+  skip(){ tone(440, 0, .08, "sine", .08); tone(440, .1, .08, "sine", .08); },
+  undo(){ tone(600, 0, .12, "sine", .08, 400); },
+  fanfare(){ [[523,0],[523,.12],[523,.24],[659,.36],[784,.6],[659,.78],[784,.9]].forEach(([f,t2]) => tone(f, t2, .2, "square", .08)); tone(1047, 1.02, .6, "triangle", .14); }
+};
+function setSound(on){
+  soundOn = on; try { localStorage.setItem("lego-sound", on ? "on" : "off"); } catch(e){}
+  const b = document.getElementById("sound"); b.textContent = on ? "🔊" : "🔇"; b.setAttribute("aria-pressed", String(on));
+  if (on) tone(880, 0, .12, "triangle", .12);
+}
+
+/* ---------- zdarzenia ---------- */
+document.addEventListener("click", e => {
+  const t = e.target.closest("button,a"); if (!t) return;
+  if (t.matches(".kidbtn")) return openKid(t.dataset.kid);
+  if (t.dataset.dec) return decide(t.dataset.n, t.dataset.dec);
+  if (t.dataset.win) return playDuel(t.dataset.win);
+  if (t.dataset.view){ view = t.dataset.view; filter = "all"; return render(); }
+  if (t.dataset.filter){ filter = t.dataset.filter; return render(); }
+  if (t.dataset.theme!==undefined && t.matches(".chip")){ theme = t.dataset.theme; return render(); }
+  if (t.dataset.move){ cursor += +t.dataset.move; return render(); }
+  if (t.dataset.step) return goStage(+t.dataset.step);
+  if (t.dataset.revive) return revive(t.dataset.revive);
+  if (t.dataset.up) return moveRank(+t.dataset.up,-1);
+  if (t.dataset.down) return moveRank(+t.dataset.down,1);
+  if (t.dataset.reset) return resetKid(t.dataset.reset, t);
+  switch (t.id){
+    case "sound": return setSound(!soundOn);
+    case "copy-link": { const txt = document.getElementById("device-link").textContent; const note = document.getElementById("copy-note");
+      try { navigator.clipboard.writeText(txt).then(() => note.textContent = "Skopiowano.", () => note.textContent = "Zaznacz link i skopiuj ręcznie."); } catch(err){ note.textContent = "Zaznacz link i skopiuj ręcznie."; } return; }
+    case "go": return advance();
+    case "undo": return undo();
+    case "skip": return skipDuel();
+    case "switch-kid": return showPick();
+    case "open-settings": case "open-settings-pick": return openSettings();
+    case "close-settings": return document.getElementById("settings").close();
+    case "open-add": return openAdd();
+    case "close-add": return document.getElementById("add").close();
+    case "edit-rank": editRank = true; return render();
+  }
+});
+document.addEventListener("keydown", e => {
+  if (!kid || document.querySelector("dialog[open]") || e.target.matches("input,textarea")) return;
+  const st = K().stage;
+  if (st===1 || st===2){
+    const picks = document.querySelectorAll(".pick"); if (picks.length!==2) return;
+    if (e.key==="ArrowLeft"){ e.preventDefault(); playDuel(picks[0].dataset.win); }
+    else if (e.key==="ArrowRight"){ e.preventDefault(); playDuel(picks[1].dataset.win); }
+    else if (e.key==="ArrowDown"){ e.preventDefault(); skipDuel(); }
+  } else if (st===0 && view==="solo"){
+    const card = document.querySelector(".solo .card"); if (!card) return;
+    const m = { ArrowLeft:"N", ArrowDown:"M", ArrowRight:"S" }[e.key];
+    if (m){ e.preventDefault(); decide(card.dataset.n, m); }
+  }
+  if (e.key==="Backspace"){ e.preventDefault(); undo(); }
+});
+
+/* ---------- dodawanie po numerze ---------- */
+function openAdd(){
+  document.getElementById("add-who").textContent = "Zestaw trafi tylko na listę " + KIDGEN[kid] + ", od razu jako „Super!”.";
+  document.getElementById("add-num").value = ""; document.getElementById("add-name").value = "";
+  addCheck(); document.getElementById("add").showModal(); document.getElementById("add-num").focus();
+}
+function addCheck(){
+  const n = document.getElementById("add-num").value.replace(/\D/g,"");
+  const prev = document.getElementById("add-preview"), go = document.getElementById("add-go"), nameWrap = document.getElementById("add-name-wrap");
+  go.disabled = true; nameWrap.hidden = true; prev.innerHTML = ""; go.textContent = "Dodaj"; go.dataset.mode = "add";
+  if (n.length < 4) return;
+  const known = !!(SETS[n] || CATALOG[n]);
+  const s = known ? getSet(n) : { n, name:"", unknown:true };
+  prev.innerHTML = `<div class="addprev">${picHTML(s,false)}<div><h3>${known ? title(s) : "Nie znam tego numeru"}</h3><div class="meta">${known ? "Nr " + n + " · " + metaLine(s) : "Sprawdź, czy numer jest dobrze przepisany. Możesz go dodać mimo to."}</div></div></div>`;
+  if (listOf(kid).includes(n)){
+    if (K().review[n]==="S"){ prev.insertAdjacentHTML("beforeend", `<p class="note">Ten zestaw już jest na liście ${KIDGEN[kid]} jako „Super!”.</p>`); return; }
+    go.disabled = false; go.textContent = "Zmień na „Super!”"; go.dataset.mode = "super"; return;
+  }
+  if (!known) nameWrap.hidden = false;
+  go.disabled = false;
+}
+document.getElementById("add-num").addEventListener("input", addCheck);
+document.getElementById("add-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const n = document.getElementById("add-num").value.replace(/\D/g,""); const go = document.getElementById("add-go");
+  if (n.length < 4 || go.disabled) return;
+  const ks = K();
+  if (go.dataset.mode==="add"){ ks.extra.push({ n, name: document.getElementById("add-name").value.trim().slice(0,80) }); delete SETS[n]; }
+  ks.review[n] = "S"; ks.done = false; save();
+  document.getElementById("add").close();
+  if (ks.stage===0){ view = "grid"; filter = "all"; theme = ""; }
+  render();
+  const el = document.querySelector(`.card[data-n="${n}"]`); if (el) el.scrollIntoView({block:"center"});
+});
+
+document.getElementById("family").addEventListener("submit", e => {
+  e.preventDefault();
+  const c = normCode(document.getElementById("family-code").value);
+  if (!codeOk(c)){ document.getElementById("family-note").textContent = "To nie wygląda na nasz kod. Sprawdź litery i cyfry."; return; }
+  try { localStorage.setItem("lego-family-code", c); } catch(e){}
+  document.getElementById("family-note").textContent = "";
+  connectDb();
+});
+
+/* ---------- panel rodzica ---------- */
+const SETTING_KEYS = ["fmin","fmax","livesS","livesM"];
+function openSettings(){
+  for (const k of SETTING_KEYS) document.getElementById(k).value = S()[k];
+  document.getElementById("limits-note").textContent = ""; document.getElementById("reset-note").textContent = "";
+  document.querySelectorAll("[data-reset]").forEach(b => { b.dataset.armed = ""; b.textContent = "Wyczyść wybory " + KIDGEN[b.dataset.reset]; });
+  const dv = document.getElementById("devices"); dv.hidden = !currentCode;
+  if (currentCode) document.getElementById("device-link").textContent = location.origin + location.pathname + "#kod=" + prettyCode(currentCode);
+  document.getElementById("copy-note").textContent = "";
+  document.getElementById("settings").showModal();
+}
+for (const k of SETTING_KEYS) document.getElementById(k).addEventListener("change", e => {
+  const s = Object.assign({}, state.settings, { [k]: e.target.value });
+  if (k==="fmax" && +s.fmax < +s.fmin) s.fmin = s.fmax;
+  state.settings = cleanSettings(s);
+  for (const kk of SETTING_KEYS) document.getElementById(kk).value = state.settings[kk];
+  save("settings");
+  document.getElementById("limits-note").textContent = `Zapisano: finał ${S().fmin}–${S().fmax}, serduszka Super ${S().livesS}, Może ${S().livesM}.`;
+  if (kid) render();
+});
+function resetKid(k, btn){
+  if (!btn.dataset.armed){ btn.dataset.armed = "1"; btn.textContent = "Na pewno? Kliknij jeszcze raz"; return; }
+  state.kids[k] = blankKid(); save(k); btn.dataset.armed = ""; btn.textContent = "Wyczyść wybory " + KIDGEN[k];
+  document.getElementById("reset-note").textContent = "Wyczyszczono wybory " + KIDGEN[k] + ".";
+  if (kid===k) openKid(k);
+}
+
+showPick();
+connectDb();
+document.getElementById("sound").textContent = soundOn ? "🔊" : "🔇";
+document.getElementById("sound").setAttribute("aria-pressed", String(soundOn));
+</script>

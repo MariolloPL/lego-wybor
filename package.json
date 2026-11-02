@@ -1,0 +1,11 @@
+{
+  "name": "lego-wybor",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.156.2"
+  }
+}

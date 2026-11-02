@@ -1,0 +1,17 @@
+{
+  // Strona (public/) + Worker z wspólnym zapisem postępu (Durable Object, SQLite – działa na darmowym planie).
+  "name": "lego-wybor",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  // Workery z Durable Objects nie obsługują preview URL.
+  "preview_urls": false,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "STORE", "class_name": "FamilyStore" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["FamilyStore"] }]
+}
