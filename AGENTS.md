@@ -19,9 +19,10 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 ## Zapis postępu
 
 - Każde dziecko ma osobny dokument (`jas`, `antek`) plus `settings`. Wybory jednego dziecka nie wpływają na drugie.
-- Na Cloudflare dostęp do danych daje **kod rodzinny** (12 znaków z sumą kontrolną, format XXXX-XXXX-XXXX), wysyłany w nagłówku `x-family-code`.
-  Każdy kod ma własny magazyn. Kodu nie zapisujemy w repozytorium.
-- Link dla nowego urządzenia: `https://<adres>/#kod=XXXX-XXXX-XXXX` – kod zapisuje się w przeglądarce i znika z paska adresu.
+- Na Cloudflare dostęp do danych daje **kod rodzinny** wysyłany w nagłówku `x-family-code`. Worker porównuje go z sekretem
+  `FAMILY_CODE` ustawionym w Cloudflare (Settings → Variables and Secrets, typ Secret). Kodu nie zapisujemy w repozytorium (repo jest publiczne).
+  Zły kod = odpowiedź 401 i komunikat na stronie. Cały postęp jest w jednym Durable Object (`family`), więc zmiana kodu nie kasuje danych.
+- Link dla nowego urządzenia: `https://<adres>/#kod=<kod>` – kod zapisuje się w przeglądarce i znika z paska adresu.
 - Urządzenia odpytują serwer co 4 s; ostatni zapis wygrywa.
 - Na claude.ai strona używa bazy artefaktu (`window.claude.use("db")`), bez kodu.
 
@@ -38,6 +39,6 @@ Numery zestawów z list źródłowych są nadrzędne. Podejrzane numery najpierw
 ## Sprawdzenie przed pushem
 
 1. `python3 build.py`
-2. `npx wrangler dev` i otwórz http://localhost:8787/#kod=<kod testowy> (wygeneruj kod testowy, nie używaj rodzinnego).
+2. Utwórz `.dev.vars` (jest w .gitignore) z linią `FAMILY_CODE=TEST1234`, uruchom `npx wrangler dev` i otwórz http://localhost:8787/#kod=TEST1234.
 3. Sprawdź telefon (420 px) i komputer, jasny i ciemny motyw, przegląd, pojedynek, finał, zapis między dwoma oknami.
 4. Commit z jasnym opisem, potem push na `main`.

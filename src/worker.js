@@ -1,15 +1,17 @@
-// Worker: serwuje stronę z public/ i trzyma wspólny postęp chłopców.
-// Każdy kod rodzinny ma własny magazyn (Durable Object). Bez poprawnego kodu nie ma dostępu do danych.
+// Worker: serwuje stronę z public/ i trzyma wspólny postęp chłopców (Durable Object).
+// Dostęp do danych tylko z kodem rodzinnym równym sekretowi FAMILY_CODE ustawionemu w Cloudflare
+// (Settings → Variables and Secrets). Kodu nie ma w repozytorium.
 import { DurableObject } from "cloudflare:workers";
 
 const KEYS = new Set(["jas", "antek", "settings"]);
-const ALPH = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+const norm = (x) => String(x || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 
-function codeOk(c) {
-  if (!/^[2-9A-HJKMNP-Z]{12}$/.test(c)) return false;
-  let s = 0;
-  for (let i = 0; i < 10; i++) s += (i + 1) * ALPH.indexOf(c[i]);
-  return c[10] === ALPH[s % 31] && c[11] === ALPH[(s * 7 + 3) % 31];
+// porównanie w stałym czasie, żeby nie zdradzać długości zgodnego fragmentu
+function sameCode(a, b) {
+  if (!a || !b) return false;
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return diff === 0;
 }
 
 const json = (body, status = 200) =>
@@ -23,9 +25,8 @@ export default {
     const key = m[1];
     if (!KEYS.has(key)) return json({ error: "not_found" }, 404);
 
-    const code = (request.headers.get("x-family-code") || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
-    if (!codeOk(code)) return json({ error: "auth" }, 401);
-    const store = env.STORE.get(env.STORE.idFromName(code));
+    if (!sameCode(norm(request.headers.get("x-family-code")), norm(env.FAMILY_CODE))) return json({ error: "auth" }, 401);
+    const store = env.STORE.get(env.STORE.idFromName("family"));
 
     if (request.method === "GET") {
       const rec = await store.read(key);

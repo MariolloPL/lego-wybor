@@ -283,7 +283,7 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
     </div>
     <form class="family" id="family" hidden>
       <label for="family-code"><b>Kod rodzinny</b> – wpisz raz na tym urządzeniu, żeby postęp był wspólny na telefonach i tablecie.</label>
-      <div class="row"><input id="family-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX" maxlength="16"><button class="btn solid" type="submit">Zapisz</button></div>
+      <div class="row"><input id="family-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="kod" maxlength="40" inputmode="text"><button class="btn solid" type="submit">Zapisz</button></div>
       <p class="note bad" id="family-note"></p>
     </form>
     <button class="linkbtn" id="open-settings-pick">Dla rodzica: jak to działa i ustawienia</button>
@@ -488,16 +488,12 @@ function onRemote(key, d, meta, firstRef){
   if (before !== JSON.stringify(key==="settings" ? state.settings : state.kids[key]) && !busy){ if (kid) render(); else showPick(); }
 }
 /* kod rodzinny (tylko na własnej stronie) */
-const ALPH = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+// Kod rodzinny ustawia rodzic w Cloudflare (sekret FAMILY_CODE); tu sprawdzamy tylko format.
 function normCode(x){ return String(x||"").toUpperCase().replace(/[^0-9A-Z]/g,""); }
-function codeOk(c){
-  if (!/^[2-9A-HJKMNP-Z]{12}$/.test(c)) return false;
-  let s = 0; for (let i=0;i<10;i++) s += (i+1) * ALPH.indexOf(c[i]);
-  return c[10]===ALPH[s % 31] && c[11]===ALPH[(s*7+3) % 31];
-}
-function prettyCode(c){ return c.slice(0,4)+"-"+c.slice(4,8)+"-"+c.slice(8); }
+function codeOk(c){ return /^[0-9A-Z]{4,32}$/.test(c); }
+function prettyCode(c){ return c; }
 function familyCode(){
-  const m = location.hash.match(/kod=([0-9A-Za-z-]{12,20})/);
+  const m = location.hash.match(/kod=([0-9A-Za-z-]{4,40})/);
   if (m){ history.replaceState(null, "", location.pathname + location.search); const c = normCode(m[1]); if (codeOk(c)){ try { localStorage.setItem("lego-family-code", c); } catch(e){} return c; } }
   try { const c = normCode(localStorage.getItem("lego-family-code")); return codeOk(c) ? c : ""; } catch(e){ return ""; }
 }
@@ -1011,7 +1007,7 @@ document.getElementById("add-form").addEventListener("submit", e => {
 document.getElementById("family").addEventListener("submit", e => {
   e.preventDefault();
   const c = normCode(document.getElementById("family-code").value);
-  if (!codeOk(c)){ document.getElementById("family-note").textContent = "To nie wygląda na nasz kod. Sprawdź litery i cyfry."; return; }
+  if (!codeOk(c)){ document.getElementById("family-note").textContent = "Wpisz kod: same litery i cyfry, co najmniej 4 znaki."; return; }
   try { localStorage.setItem("lego-family-code", c); } catch(e){}
   document.getElementById("family-note").textContent = "";
   connectDb();
