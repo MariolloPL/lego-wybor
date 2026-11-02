@@ -719,7 +719,7 @@ function renderAll(){
       <div class="nm"><span class="no">${s.n}</span>${title(s)}</div>
       <div class="sub">${metaLine(s)}${s.year ? " · " + s.year : ""}${s.nameCheck ? ' <span class="chk" title="Nazwa poprawiona ręcznie – sprawdź na pudełku">· nazwa do sprawdzenia</span>' : ""}</div>
       <div class="tags">${o.j ? tag("jas","Jaś") : ""}${o.a ? tag("antek","Antek") : ""}</div></div>
-      <a class="pklink" href="https://promoklocki.pl/?s=${s.n}" target="_blank" rel="noopener">promoklocki.pl ↗</a></div>`;
+      <a class="pklink" href="https://promoklocki.pl/${s.n}" target="_blank" rel="noopener">promoklocki.pl ↗</a></div>`;
   }).join("") : `<div class="empty">Nic nie pasuje do wyszukiwania.</div>`;
 }
 document.getElementById("all-q").addEventListener("input", renderAll);
