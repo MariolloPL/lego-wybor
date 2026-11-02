@@ -35,6 +35,10 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 3. Wielki finał: każdy z każdym.
 4. Lista marzeń z możliwością poprawienia kolejności.
 
+Zakładka „Wszystkie zestawy” (dla rodzica): wszystkie zestawy z oznaczeniem listy (Jaś/Antek), bieżącą oceną, linkiem
+`https://promoklocki.pl/<numer>` i rankingiem Elo liczonym z dziennika pojedynków (start 1500, K = 32, remis w finale = 0,5).
+Elo jest wyłącznie informacyjne – nie wpływa na dobór par ani wynik.
+
 Numery zestawów z list źródłowych są nadrzędne. Podejrzane numery najpierw zweryfikuj (Brickset), nie poprawiaj ich automatycznie – zgłoś rodzicowi.
 
 ## Sprawdzenie przed pushem

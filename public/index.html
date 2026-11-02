@@ -80,6 +80,8 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center}
 .tag{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:2px 9px;font-size:13px;font-weight:800;color:#fff}
 .tag.jas{background:#1d6bd0} .tag.antek{background:#e46a0a}
+.tag .elo{font-variant-numeric:tabular-nums;font-size:12px;opacity:.95;padding-left:2px}
+.elo-note{margin:12px 0 0;color:var(--muted);font-size:13px;font-weight:700;max-width:70ch}
 .tag .st{background:rgb(255 255 255/.25);border-radius:99px;padding:0 5px;font-size:12px}
 .pklink{font-size:13px;font-weight:800;color:var(--ink);text-decoration:none;border:1.5px solid var(--line);border-radius:99px;padding:5px 10px;white-space:nowrap}
 .pklink:hover{border-color:var(--ink)}
@@ -332,11 +334,11 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
     <div class="row">
       <input class="all-search" id="all-q" type="search" placeholder="Szukaj: numer albo nazwa" autocomplete="off" aria-label="Szukaj zestawu">
       <select class="all-sort" id="all-sort" aria-label="Sortuj">
-        <option value="num">Sortuj: numer</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
+        <option value="num">Sortuj: numer</option><option value="eloJas">Sortuj: Elo Jasia</option><option value="eloAntek">Sortuj: Elo Antka</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
       </select>
     </div>
   </div></div>
-  <div class="wrap"><div class="alist" id="alist"></div></div>
+  <div class="wrap"><p class="elo-note">Elo to ranking z pojedynków: każdy zestaw zaczyna od 1500, wygrana z faworytem daje więcej punktów niż z outsiderem. Tylko dla rodzica – nie zmienia zasad gry.</p><div class="alist" id="alist"></div></div>
 </section>
 
 <section id="app" hidden>
@@ -692,6 +694,25 @@ function allSets(){
   for (const k of ["jas","antek"]) for (const n of listOf(k)) if (!out.includes(n)) out.push(n);
   return out;
 }
+/* Elo – tylko informacja dla rodzica, nie wpływa na grę.
+   Liczone z dziennika pojedynków (zwykłe, druga szansa, finał), start 1500, K = 32.
+   Remis w finale = 0,5; „Nie umiem wybrać” w zwykłych pojedynkach nie zmienia rankingu. */
+const ELO_START = 1500, ELO_K = 32;
+function eloFor(k){
+  const ks = state.kids[k], list = new Set(listOf(k));
+  const r = {}, g = {};
+  const get = n => r[n] ?? ELO_START;
+  for (const e of ks.log){
+    if (e.t==="v" || !list.has(e.a) || !list.has(e.b)) continue;
+    if (!e.w && e.t!=="f") continue;
+    const ra = get(e.a), rb = get(e.b);
+    const ea = 1 / (1 + Math.pow(10, (rb - ra) / 400));
+    const sa = !e.w ? 0.5 : e.w===e.a ? 1 : 0;
+    r[e.a] = ra + ELO_K * (sa - ea); r[e.b] = rb + ELO_K * ((1 - sa) - (1 - ea));
+    g[e.a] = (g[e.a]||0) + 1; g[e.b] = (g[e.b]||0) + 1;
+  }
+  return { rating: r, games: g };
+}
 function showAll(){
   screen = "all"; kid = null;
   document.getElementById("pick").hidden = true; document.getElementById("app").hidden = true; document.getElementById("all").hidden = false;
@@ -699,6 +720,7 @@ function showAll(){
 }
 function renderAll(){
   const all = allSets();
+  const elo = { jas: eloFor("jas"), antek: eloFor("antek") };
   const on = n => ({ j: listOf("jas").includes(n), a: listOf("antek").includes(n) });
   const cnt = { all: all.length, both: 0, jas: 0, antek: 0 };
   all.forEach(n => { const o = on(n); if (o.j && o.a) cnt.both++; else if (o.j) cnt.jas++; else cnt.antek++; });
@@ -710,11 +732,13 @@ function renderAll(){
   let list = all.filter(n => { const o = on(n);
     return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j); });
   if (q) list = list.filter(n => n.includes(q) || (getSet(n).name||"").toLowerCase().includes(q) || (getSet(n).theme||"").toLowerCase().includes(q));
-  const key = { num: n => n.padStart(7,"0"), theme: n => (getSet(n).theme||"") + "|" + n.padStart(7,"0"), name: n => (getSet(n).name||"zz").toLowerCase(), age: n => String(getSet(n).age||99).padStart(2,"0") + "|" + n.padStart(7,"0") }[sort];
+  const eloKey = k => n => { const v = elo[k].rating[n]; return v==null ? "1|" + n.padStart(7,"0") : "0|" + String(Math.round(9999 - v)).padStart(5,"0"); };
+  const key = { eloJas: eloKey("jas"), eloAntek: eloKey("antek"), num: n => n.padStart(7,"0"), theme: n => (getSet(n).theme||"") + "|" + n.padStart(7,"0"), name: n => (getSet(n).name||"zz").toLowerCase(), age: n => String(getSet(n).age||99).padStart(2,"0") + "|" + n.padStart(7,"0") }[sort];
   list.sort((a,b) => key(a).localeCompare(key(b), "pl"));
   document.getElementById("alist").innerHTML = list.length ? list.map(n => {
     const s = getSet(n), o = on(n);
-    const tag = (k, nm) => `<span class="tag ${k}" title="Na liście: ${nm}${state.kids[k].review[n] ? " · ocena: " + ({S:"Super!",M:"Może",N:"Nie"})[state.kids[k].review[n]] : ""}">${nm}<span class="st">${STLABEL[state.kids[k].review[n]||"U"]}</span></span>`;
+    const tag = (k, nm) => { const v = elo[k].rating[n], gm = elo[k].games[n] || 0;
+      return `<span class="tag ${k}" title="Na liście: ${nm}${state.kids[k].review[n] ? " · ocena: " + ({S:"Super!",M:"Może",N:"Nie"})[state.kids[k].review[n]] : ""}${gm ? ` · Elo ${Math.round(v)} po ${gm} pojedynkach` : ""}">${nm}<span class="st">${STLABEL[state.kids[k].review[n]||"U"]}</span>${gm ? `<span class="elo">Elo ${Math.round(v)}</span>` : ""}</span>`; };
     return `<div class="arow">${picHTML(s,false)}<div style="min-width:0">
       <div class="nm"><span class="no">${s.n}</span>${title(s)}</div>
       <div class="sub">${metaLine(s)}${s.year ? " · " + s.year : ""}${s.nameCheck ? ' <span class="chk" title="Nazwa poprawiona ręcznie – sprawdź na pudełku">· nazwa do sprawdzenia</span>' : ""}</div>
