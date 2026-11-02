@@ -60,6 +60,30 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .kidbtn.j{--c:#1d6bd0;--cd:#124d99}
 .kidbtn.a{--c:#e46a0a;--cd:#a94c05}
 @media (max-width:520px){.kids{grid-template-columns:1fr;max-width:320px}}
+.allbtn{border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:12px 20px;font:700 18px/1 var(--f-display);box-shadow:var(--shadow)}
+.allbtn:hover{border-color:var(--ink)}
+#all{padding-bottom:40px}
+.all-head{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding-block:10px;display:grid;gap:10px}
+.all-head .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.all-head h2{font-size:clamp(22px,3vw,28px)}
+.all-search{font:inherit;font-weight:700;padding:9px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);flex:1;min-width:0;max-width:340px}
+.all-sort{font:inherit;font-weight:700;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.alist{display:grid;gap:6px;padding-top:12px}
+.arow{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border-radius:14px;padding:6px 10px 6px 6px;box-shadow:var(--shadow)}
+.arow .pic{aspect-ratio:4/3;border-radius:10px}
+.arow .pic img{padding:2px}
+.arow .pic .ph{font-size:13px}
+.arow .nm{font-weight:800;font-size:15px;overflow-wrap:anywhere}
+.arow .nm .no{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;margin-right:6px}
+.arow .sub{font-size:13px;color:var(--muted);font-weight:700}
+.arow .chk{color:var(--warn);font-size:12px;font-weight:800}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:2px 9px;font-size:13px;font-weight:800;color:#fff}
+.tag.jas{background:#1d6bd0} .tag.antek{background:#e46a0a}
+.tag .st{background:rgb(255 255 255/.25);border-radius:99px;padding:0 5px;font-size:12px}
+.pklink{font-size:13px;font-weight:800;color:var(--ink);text-decoration:none;border:1.5px solid var(--line);border-radius:99px;padding:5px 10px;white-space:nowrap}
+.pklink:hover{border-color:var(--ink)}
+@media (max-width:520px){.arow{grid-template-columns:60px minmax(0,1fr)}.arow .pklink{grid-column:2;justify-self:start}}
 .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-weight:700;padding:6px}
 
 /* ---------- nagłówek ---------- */
@@ -294,8 +318,25 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
       <div class="row"><input id="family-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="kod" maxlength="40" inputmode="text"><button class="btn solid" type="submit">Zapisz</button></div>
       <p class="note bad" id="family-note"></p>
     </form>
+    <button class="allbtn" id="open-all">📋 Wszystkie zestawy</button>
     <button class="linkbtn" id="open-settings-pick">Dla rodzica: jak to działa i ustawienia</button>
   </div>
+</section>
+
+<section id="all" hidden>
+  <div class="all-head"><div class="wrap" style="display:grid;gap:10px">
+    <div class="row"><button class="iconbtn" id="all-back">← Wróć</button><h2 id="all-title">Wszystkie zestawy</h2></div>
+    <div class="row">
+      <div class="chips" role="group" aria-label="Lista" id="all-filters"></div>
+    </div>
+    <div class="row">
+      <input class="all-search" id="all-q" type="search" placeholder="Szukaj: numer albo nazwa" autocomplete="off" aria-label="Szukaj zestawu">
+      <select class="all-sort" id="all-sort" aria-label="Sortuj">
+        <option value="num">Sortuj: numer</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
+      </select>
+    </div>
+  </div></div>
+  <div class="wrap"><div class="alist" id="alist"></div></div>
 </section>
 
 <section id="app" hidden>
@@ -493,7 +534,7 @@ function onRemote(key, d, meta, firstRef){
   const before = JSON.stringify(key==="settings" ? state.settings : state.kids[key]);
   if (key==="settings") state.settings = cleanSettings(d.settings); else state.kids[key] = cleanKid(d.kid);
   cache();
-  if (before !== JSON.stringify(key==="settings" ? state.settings : state.kids[key]) && !busy){ if (kid) render(); else showPick(); }
+  if (before !== JSON.stringify(key==="settings" ? state.settings : state.kids[key]) && !busy){ if (screen==="all") renderAll(); else if (kid) render(); else showPick(); }
 }
 /* kod rodzinny (tylko na własnej stronie) */
 // Kod rodzinny ustawia rodzic w Cloudflare (sekret FAMILY_CODE); tu sprawdzamy tylko format.
@@ -643,14 +684,55 @@ function kidSummary(k){
   else t = ks.done ? `Lista gotowa: ${E.finalists.length} ${plz(E.finalists.length)}` : "Lista marzeń";
   kid = prev; return t;
 }
+/* ---------- wszystkie zestawy (widok rodzica) ---------- */
+let screen = "pick", allFilter = "all";
+const STLABEL = { S:"❤", M:"?", N:"✕", U:"·" };
+function allSets(){
+  const out = [];
+  for (const k of ["jas","antek"]) for (const n of listOf(k)) if (!out.includes(n)) out.push(n);
+  return out;
+}
+function showAll(){
+  screen = "all"; kid = null;
+  document.getElementById("pick").hidden = true; document.getElementById("app").hidden = true; document.getElementById("all").hidden = false;
+  renderAll(); window.scrollTo(0,0);
+}
+function renderAll(){
+  const all = allSets();
+  const on = n => ({ j: listOf("jas").includes(n), a: listOf("antek").includes(n) });
+  const cnt = { all: all.length, both: 0, jas: 0, antek: 0 };
+  all.forEach(n => { const o = on(n); if (o.j && o.a) cnt.both++; else if (o.j) cnt.jas++; else cnt.antek++; });
+  document.getElementById("all-title").textContent = `Wszystkie zestawy (${all.length})`;
+  document.getElementById("all-filters").innerHTML = [["all","Wszystkie",cnt.all],["both","Jaś i Antek",cnt.both],["jas","Tylko Jaś",cnt.jas],["antek","Tylko Antek",cnt.antek]]
+    .map(([k,l,c]) => `<button class="chip" data-afilter="${k}" aria-pressed="${allFilter===k}">${l}<span class="c">${c}</span></button>`).join("");
+  const q = document.getElementById("all-q").value.trim().toLowerCase();
+  const sort = document.getElementById("all-sort").value;
+  let list = all.filter(n => { const o = on(n);
+    return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j); });
+  if (q) list = list.filter(n => n.includes(q) || (getSet(n).name||"").toLowerCase().includes(q) || (getSet(n).theme||"").toLowerCase().includes(q));
+  const key = { num: n => n.padStart(7,"0"), theme: n => (getSet(n).theme||"") + "|" + n.padStart(7,"0"), name: n => (getSet(n).name||"zz").toLowerCase(), age: n => String(getSet(n).age||99).padStart(2,"0") + "|" + n.padStart(7,"0") }[sort];
+  list.sort((a,b) => key(a).localeCompare(key(b), "pl"));
+  document.getElementById("alist").innerHTML = list.length ? list.map(n => {
+    const s = getSet(n), o = on(n);
+    const tag = (k, nm) => `<span class="tag ${k}" title="Na liście: ${nm}${state.kids[k].review[n] ? " · ocena: " + ({S:"Super!",M:"Może",N:"Nie"})[state.kids[k].review[n]] : ""}">${nm}<span class="st">${STLABEL[state.kids[k].review[n]||"U"]}</span></span>`;
+    return `<div class="arow">${picHTML(s,false)}<div style="min-width:0">
+      <div class="nm"><span class="no">${s.n}</span>${title(s)}</div>
+      <div class="sub">${metaLine(s)}${s.year ? " · " + s.year : ""}${s.nameCheck ? ' <span class="chk" title="Nazwa poprawiona ręcznie – sprawdź na pudełku">· nazwa do sprawdzenia</span>' : ""}</div>
+      <div class="tags">${o.j ? tag("jas","Jaś") : ""}${o.a ? tag("antek","Antek") : ""}</div></div>
+      <a class="pklink" href="https://promoklocki.pl/?s=${s.n}" target="_blank" rel="noopener">promoklocki.pl ↗</a></div>`;
+  }).join("") : `<div class="empty">Nic nie pasuje do wyszukiwania.</div>`;
+}
+document.getElementById("all-q").addEventListener("input", renderAll);
+document.getElementById("all-sort").addEventListener("change", renderAll);
+
 function showPick(){
-  kid = null;
+  kid = null; screen = "pick"; document.getElementById("all").hidden = true;
   document.getElementById("st-jas").textContent = kidSummary("jas");
   document.getElementById("st-antek").textContent = kidSummary("antek");
   document.getElementById("pick").hidden = false; document.getElementById("app").hidden = true;
 }
 function openKid(k){
-  kid = k; document.body.dataset.kid = k;
+  kid = k; screen = "app"; document.body.dataset.kid = k;
   undoStack = []; filter = "all"; theme = ""; cursor = 0; armed = false; editRank = false; run = 0; seen = []; back = -1;
   const c = reviewCounts(); view = c.U>0 ? "solo" : "grid";
   document.getElementById("kid-name").textContent = KIDNAME[k];
@@ -958,6 +1040,7 @@ document.addEventListener("click", e => {
   if (t.matches(".kidbtn")) return openKid(t.dataset.kid);
   if (t.dataset.dec) return decide(t.dataset.n, t.dataset.dec);
   if (t.dataset.win) return playDuel(t.dataset.win);
+  if (t.dataset.afilter){ allFilter = t.dataset.afilter; return renderAll(); }
   if (t.dataset.view){ view = t.dataset.view; filter = "all"; back = -1; return render(); }
   if (t.dataset.filter){ filter = t.dataset.filter; return render(); }
   if (t.dataset.theme!==undefined && t.matches(".chip")){ theme = t.dataset.theme; return render(); }
@@ -975,6 +1058,8 @@ document.addEventListener("click", e => {
     case "undo": return undo();
     case "skip": return skipDuel();
     case "switch-kid": return showPick();
+    case "open-all": return showAll();
+    case "all-back": return showPick();
     case "open-settings": case "open-settings-pick": return openSettings();
     case "close-settings": return document.getElementById("settings").close();
     case "open-add": return openAdd();
