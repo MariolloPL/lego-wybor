@@ -186,7 +186,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .skip{border:2px dashed var(--line);background:none;border-radius:14px;padding:10px 16px;font-weight:800;color:var(--muted)}
 .skip:hover{border-color:var(--muted)}
 .pick{position:relative}
-.streak{display:inline-block;margin:4px auto 0;background:var(--maybe-soft);color:var(--warn);border-radius:99px;padding:2px 10px;font-weight:800;font-size:13px}
 .pick.win{border-color:var(--heart);box-shadow:0 0 0 6px var(--heart-soft),var(--shadow);animation:winpop .55s cubic-bezier(.3,1.6,.5,1)}
 .pick.lose{animation:shake .35s;opacity:.35;transform:scale(.94)}
 @keyframes winpop{0%{transform:scale(1)}40%{transform:scale(1.1) rotate(-1.5deg)}100%{transform:scale(1.05)}}
@@ -390,7 +389,7 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
         <li><b>Przegląd:</b> każdy zestaw dostaje Super!, Może albo Nie.</li>
         <li><b>Pojedynki:</b> Super i Może grają ze sobą parami. Super zaczyna z większą liczbą serduszek niż Może. Przegrana zabiera jedno serduszko, a zestaw bez serduszek odpada. Rywali dobiera się według wyniku, więc po porażce zestaw nie trafia znowu na faworyta.</li>
         <li><b>Druga szansa:</b> zestaw, który przegrał tylko z finalistami, gra jeszcze raz o miejsce w finale. Odpadły zestaw można też wpuścić ręcznie przyciskiem „Jeszcze raz” w tabeli.</li>
-        <li><b>Wielki finał:</b> finaliści grają każdy z każdym. Wynik ustala kolejność, którą można potem poprawić strzałkami.</li>
+        <li><b>Wielki finał:</b> finaliści grają każdy z każdym, dwa razy (runda pierwsza i rewanż), więc jedno przypadkowe kliknięcie nie rozstrzyga o kolejności. Wynik można potem poprawić strzałkami.</li>
       </ol>
     </div>
     <div>
@@ -603,6 +602,7 @@ const ICON_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" st
 /* ================= silnik pojedynków =================
    Cały stan pojedynków wynika z dziennika (log) – cofanie to usunięcie ostatniego wpisu.
    d = zwykły pojedynek, r = druga szansa, v = ręczne „jeszcze raz”, f = wielki finał (każdy z każdym). */
+const FINAL_LEGS = 2; // finał: każda para gra dwa razy (rewanż)
 function hash(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 function engine(k){
   const ks = state.kids[k], S = state.settings, list = listOf(k);
@@ -651,22 +651,28 @@ function engine(k){
     }
   }
   // wielki finał
-  let finalists = [], fpairs = [], fres = {}, fnext = null, fwins = {}, fdone = false;
+  // Wielki finał: każdy z każdym, DWA razy (runda 1, potem rewanż ze zamienionymi stronami).
+  let finalists = [], fpairs = [], fres = {}, fnext = null, fwins = {}, fdone = false, fplayed = 0, ftotal = 0;
   if (phaseDone){
     finalists = alive.slice().sort((x,y) => idx[x]-idx[y]);
     for (let i=0;i<finalists.length;i++) for (let j=i+1;j<finalists.length;j++) fpairs.push([finalists[i], finalists[j]]);
     const fin = new Set(finalists);
-    for (const e of ks.log) if (e.t==="f" && fin.has(e.a) && fin.has(e.b)) fres[key2(e.a,e.b)] = e.w || "-";
+    for (const e of ks.log) if (e.t==="f" && fin.has(e.a) && fin.has(e.b)){ const k = key2(e.a,e.b); (fres[k] = fres[k] || []); if (fres[k].length < FINAL_LEGS) fres[k].push(e.w || "-"); }
     finalists.forEach(n => fwins[n] = 0);
-    for (const [a,b] of fpairs){ const r = fres[key2(a,b)]; if (!r) continue; if (r==="-"){ fwins[a]+=.5; fwins[b]+=.5; } else fwins[r]++; }
-    // kolejność pojedynków finału przeplatana, żeby ten sam zestaw nie grał kilka razy z rzędu
+    for (const [a,b] of fpairs) for (const r of (fres[key2(a,b)] || [])){ if (r==="-"){ fwins[a]+=.5; fwins[b]+=.5; } else fwins[r]++; fplayed++; }
+    ftotal = fpairs.length * FINAL_LEGS;
+    // kolejność przeplatana, żeby ten sam zestaw nie grał kilka razy z rzędu
     const order = fpairs.map((p,i) => ({p, k: (i*7) % Math.max(1,fpairs.length)})).sort((x,y)=>x.k-y.k).map(x=>x.p);
-    const todo = order.find(([a,b]) => !fres[key2(a,b)]);
-    if (todo){ const [a,b] = todo; fnext = hash(a+b)%2 ? {t:"f",a,b} : {t:"f",a:b,b:a}; } else fdone = true;
+    for (let leg=1; leg<=FINAL_LEGS && !fnext; leg++){
+      const todo = order.find(([a,b]) => (fres[key2(a,b)] || []).length < leg);
+      if (todo){ const [a,b] = todo; const first = hash(a+b)%2 ? {a,b} : {a:b,b:a};
+        fnext = leg===1 ? {t:"f", a:first.a, b:first.b, leg} : {t:"f", a:first.b, b:first.a, leg}; }
+    }
+    if (!fnext) fdone = true;
   }
-  const h2h = (a,b) => { const r = fres[key2(a,b)]; return r===a ? -1 : r===b ? 1 : 0; };
+  const h2h = (a,b) => { let s = 0; for (const r of (fres[key2(a,b)] || [])) s += r===a ? -1 : r===b ? 1 : 0; return s; };
   const ranking = finalists.slice().sort((x,y) => fwins[y]-fwins[x] || h2h(x,y) || lives[y]-lives[x] || wins[y]-wins[x] || idx[x]-idx[y]);
-  return { streak, entrants, alive, out, lives, wins, losses, played, lostTo, chance, next, phaseDone, candidates, finalists, fpairs, fres, fnext, fwins, fdone, ranking, duelCount, key2 };
+  return { fplayed, ftotal, streak, entrants, alive, out, lives, wins, losses, played, lostTo, chance, next, phaseDone, candidates, finalists, fpairs, fres, fnext, fwins, fdone, ranking, duelCount, key2 };
 }
 
 /* ================= UI ================= */
@@ -682,7 +688,7 @@ function kidSummary(k){
   const st = Math.min(ks.stage, maxStage(E));
   if (st===0){ const c = reviewCounts(); t = c.U===c.total ? c.total + " " + plz(c.total) + " do obejrzenia" : `Przegląd: obejrzane ${c.total-c.U} z ${c.total}`; }
   else if (st===1) t = `Pojedynki: w grze ${E.alive.length}`;
-  else if (st===2) t = `Wielki finał: ${E.fpairs.length - E.fpairs.filter(([a,b])=>!E.fres[E.key2(a,b)]).length} z ${E.fpairs.length}`;
+  else if (st===2) t = `Wielki finał: ${E.fplayed} z ${E.ftotal}`;
   else t = ks.done ? `Lista gotowa: ${E.finalists.length} ${plz(E.finalists.length)}` : "Lista marzeń";
   kid = prev; return t;
 }
@@ -871,7 +877,7 @@ function livesHTML(n, E){
 }
 function pickHTML(n, side, E, showLives=true){
   const s = getSet(n);
-  return `<button class="pick" data-win="${n}" data-side="${side}">${picHTML(s)}<div class="body"><h3>${title(s)}</h3><div class="meta">${metaLine(s)}</div>${showLives?livesHTML(n,E):""}${E.streak[n]>=2?`<div class="streak">🔥 ${E.streak[n]} wygrane z rzędu</div>`:""}</div></button>`;
+  return `<button class="pick" data-win="${n}" data-side="${side}">${picHTML(s)}<div class="body"><h3>${title(s)}</h3><div class="meta">${metaLine(s)}</div>${showLives?livesHTML(n,E):""}</div></button>`;
 }
 function renderDuels(E){
   const main = document.getElementById("main"); const nx = E.next;
@@ -908,16 +914,15 @@ function playDuel(winner){
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const wEl = document.querySelector(`.pick[data-win="${winner}"]`), lEl = document.querySelector(`.pick[data-win="${loser}"]`);
   wEl.classList.add("win"); lEl.classList.add("lose");
-  const ns = (E.streak[winner]||0) + 1;
   const comeback = nx.t==="r" && winner===nx.a;
-  stamp(wEl, comeback ? "Wraca do gry!" : ns>=3 ? `🔥 ${ns} z rzędu!` : "Wygrywa!", "");
+  stamp(wEl, comeback ? "Wraca do gry!" : "Wygrywa!", "");
   if (st===1 && !(nx.t==="r" && loser===nx.a)){
     const hearts = lEl.querySelectorAll(".lives .on"); const h = hearts[hearts.length-1];
     if (h){ h.classList.add("falling"); }
     if (E.lives[loser] - 1 <= 0) stamp(lEl, "Odpada!", "bad");
   }
   if (!reduce) burst(wEl);
-  if (comeback) sfx.comeback(); else if (ns>=3) sfx.streak(ns); else sfx.win();
+  if (comeback) sfx.comeback(); else sfx.win();
   if (st===1 && !(nx.t==="r" && loser===nx.a)) setTimeout(() => (E.lives[loser]-1 <= 0 ? sfx.out() : sfx.lose()), 380);
   run++;
   setTimeout(() => {
@@ -949,12 +954,12 @@ function skipDuel(){
 /* ---------- etap 3: wielki finał ---------- */
 function renderFinal(E){
   const main = document.getElementById("main"); const nx = E.fnext;
-  const done = E.fpairs.length - E.fpairs.filter(([a,b]) => !E.fres[E.key2(a,b)]).length;
+  const done = E.fplayed;
   const standings = E.ranking.map((n,i) => { const s = getSet(n); return `<div class="trow">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${i+1}. ${title(s)}</div><div class="sub">wygrane w finale: ${String(E.fwins[n]).replace(".5","½")}</div></div><span></span></div>`; }).join("");
-  main.innerHTML = `<div class="goal"><h2>${nx ? "Wielki finał: który bardziej?" : "Finał rozegrany!"}</h2><p>Każdy finalista gra z każdym. Najwięcej wygranych = największe marzenie.</p></div>
+  main.innerHTML = `<div class="goal"><h2>${nx ? "Wielki finał: który bardziej?" : "Finał rozegrany!"}</h2><p>Każdy finalista gra z każdym – dwa razy: najpierw runda pierwsza, potem rewanż. Najwięcej wygranych = największe marzenie.</p></div>
     <div class="duel">
-      <div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/Math.max(1,E.fpairs.length))}%"></i></div>
-      <div class="nav">Pojedynek ${Math.min(done+1, E.fpairs.length)} z ${E.fpairs.length}</div>
+      <div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/Math.max(1,E.ftotal))}%"></i></div>
+      <div class="nav">${nx && nx.leg===2 ? "Rewanż · " : "Runda 1 · "}pojedynek ${Math.min(done+1, E.ftotal)} z ${E.ftotal}</div>
       ${nx ? `<div class="pair">${pickHTML(nx.a,"L",E,false)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E,false)}</div>
         <button class="skip" id="skip">Tak samo – remis</button>` : `<div class="big-done">🏆</div>`}
       <details class="table" ${nx?"":"open"}><summary>Wyniki finału</summary><div class="trows">${standings}</div></details>
@@ -1000,7 +1005,7 @@ function renderDock(E){
     else if (E.next && E.next.t==="r") text = "Druga szansa dla zestawu, który przegrał tylko z finalistami.";
     else text = `Pojedynek ${E.duelCount+1}. Odpadną jeszcze ${Math.max(0, E.alive.length - S().fmax)}.`;
   } else if (st===2){
-    const left = E.fpairs.filter(([a,b]) => !E.fres[E.key2(a,b)]).length;
+    const left = E.ftotal - E.fplayed;
     counts.innerHTML = `<span class="s">Finał: ${E.finalists.length}</span>${run?`<span class="run" title="Pojedynki bez przerwy">⚡ ${run}</span>`:""}`;
     label = "Lista marzeń →";
     if (E.fdone){ can = true; good = true; text = "Finał rozegrany!"; } else text = `Zostało ${left} ${left===1?"pojedynek":left<5&&left>1?"pojedynki":"pojedynków"}.`;

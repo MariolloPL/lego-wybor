@@ -32,7 +32,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 1. Przegląd: Super! / Może / Nie.
 2. Pojedynki 1 na 1: Super zaczyna z 3 serduszkami, Może z 2; przegrana = −1 serduszko; rywale dobierani wg wyniku;
    „druga szansa” dla zestawu, który przegrał tylko z finalistami; ręczne „Jeszcze raz” w tabeli.
-3. Wielki finał: każdy z każdym.
+3. Wielki finał: każdy z każdym, dwa razy (runda 1 + rewanż ze zamienionymi stronami); remis („Tak samo”) = 0,5.
+   Bez podpowiedzi przy zestawach (żadnych serii wygranych na kartach), żeby nie sugerować wyboru.
 4. Lista marzeń z możliwością poprawienia kolejności.
 
 Zakładka „Wszystkie zestawy” (dla rodzica): wszystkie zestawy z oznaczeniem listy (Jaś/Antek), bieżącą oceną, linkiem
