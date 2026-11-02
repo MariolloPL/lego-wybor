@@ -619,6 +619,7 @@ function engine(k){
 }
 
 /* ================= UI ================= */
+let seen = [], back = -1; // historia kart w trybie „po kolei”; back >= 0 = poprawiamy wcześniejszą kartę
 let kid = null, view = "solo", filter = "all", theme = "", cursor = 0, undoStack = [], armed = false, busy = false, editRank = false;
 const K = () => state.kids[kid];
 const S = () => state.settings;
@@ -642,7 +643,7 @@ function showPick(){
 }
 function openKid(k){
   kid = k; document.body.dataset.kid = k;
-  undoStack = []; filter = "all"; theme = ""; cursor = 0; armed = false; editRank = false; run = 0;
+  undoStack = []; filter = "all"; theme = ""; cursor = 0; armed = false; editRank = false; run = 0; seen = []; back = -1;
   const c = reviewCounts(); view = c.U>0 ? "solo" : "grid";
   document.getElementById("kid-name").textContent = KIDNAME[k];
   document.getElementById("pick").hidden = true; document.getElementById("app").hidden = false;
@@ -701,25 +702,45 @@ function renderGrid(){
 function renderSolo(){
   const box = document.getElementById("cards"); box.className = "solo";
   const q = listOf(kid).filter(n => rstat(n)==="U"); const c = reviewCounts();
+  seen = seen.filter(n => listOf(kid).includes(n));
+  if (back >= seen.length) back = -1;
+  const done = c.total - c.U;
+  const bar = `<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/c.total)}%"></i></div>`;
+  if (back >= 0){
+    box.innerHTML = `${bar}<div class="nav">Poprawiasz wcześniejszy wybór – kliknij, co ma być.</div>
+      ${cardHTML(seen[back], true)}
+      <div class="nav"><button class="iconbtn" data-solo="prev" ${back===0?"disabled":""}>← Poprzedni</button><button class="iconbtn" data-solo="next">${back+1<seen.length?"Następny →":"Wróć do nowych →"}</button></div>`;
+    return;
+  }
   if (!q.length){
-    box.innerHTML = `<div class="big-done">Wszystko obejrzane!</div><div class="nav">Super: ${c.S} · Może: ${c.M}. Możesz jeszcze wszystko przejrzeć albo iść do pojedynków.</div><button class="go" data-view="grid">Pokaż wszystkie</button>`;
+    box.innerHTML = `<div class="big-done">Wszystko obejrzane!</div><div class="nav">Super: ${c.S} · Może: ${c.M}. Możesz jeszcze wszystko przejrzeć albo iść do pojedynków.</div>
+      <div class="nav">${seen.length?`<button class="iconbtn" data-solo="prev">← Poprzedni</button>`:""}<button class="go" data-view="grid">Pokaż wszystkie</button></div>`;
     return;
   }
   cursor = ((cursor % q.length) + q.length) % q.length;
-  const done = c.total - c.U;
-  box.innerHTML = `<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/c.total)}%"></i></div>
-    <div class="nav">Obejrzane: ${done} z ${c.total}</div>
+  box.innerHTML = `${bar}<div class="nav">Obejrzane: ${done} z ${c.total}</div>
     ${cardHTML(q[cursor], true)}
-    <div class="nav"><button class="iconbtn" data-move="-1">← Poprzedni</button><button class="iconbtn" data-move="1">Pomiń na razie →</button></div>`;
+    <div class="nav"><button class="iconbtn" data-solo="prev" ${seen.length?"":"disabled"}>← Poprzedni</button><button class="iconbtn" data-solo="skip">Pomiń na razie →</button></div>`;
+}
+function soloNav(dir){
+  if (dir==="prev") back = back < 0 ? seen.length-1 : Math.max(0, back-1);
+  else if (dir==="next") back = back+1 < seen.length ? back+1 : -1;
+  else cursor++;
+  render();
 }
 function decide(n, d){
   const ks = K(); const prev = ks.review[n];
-  const next = prev===d ? undefined : d;
+  // w siatce drugie kliknięcie zdejmuje wybór; w trybie „po kolei” zawsze ustawia (łatwiej poprawić)
+  const next = (prev===d && view!=="solo") ? undefined : d;
   if (next) sfx.pick(next);
   undoStack.push({n, prev});
   if (next===undefined) delete ks.review[n]; else ks.review[n] = next;
   ks.done = false; armed = false; save();
-  if (view==="solo") return render();
+  if (view==="solo"){
+    if (back >= 0) back = back+1 < seen.length ? back+1 : -1;
+    else { seen = seen.filter(x => x!==n); seen.push(n); }
+    return render();
+  }
   const el = document.querySelector(`.card[data-n="${n}"]`); const st = rstat(n);
   if (el){ if (filter!=="all" && filter!==st){ el.style.opacity="0"; setTimeout(render, 160); return renderDock(engine(kid)); }
     el.dataset.st = st; el.querySelectorAll(".act").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.dec===st))); }
@@ -929,10 +950,10 @@ document.addEventListener("click", e => {
   if (t.matches(".kidbtn")) return openKid(t.dataset.kid);
   if (t.dataset.dec) return decide(t.dataset.n, t.dataset.dec);
   if (t.dataset.win) return playDuel(t.dataset.win);
-  if (t.dataset.view){ view = t.dataset.view; filter = "all"; return render(); }
+  if (t.dataset.view){ view = t.dataset.view; filter = "all"; back = -1; return render(); }
   if (t.dataset.filter){ filter = t.dataset.filter; return render(); }
   if (t.dataset.theme!==undefined && t.matches(".chip")){ theme = t.dataset.theme; return render(); }
-  if (t.dataset.move){ cursor += +t.dataset.move; return render(); }
+  if (t.dataset.solo) return soloNav(t.dataset.solo);
   if (t.dataset.step) return goStage(+t.dataset.step);
   if (t.dataset.revive) return revive(t.dataset.revive);
   if (t.dataset.up) return moveRank(+t.dataset.up,-1);
