@@ -9,7 +9,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 - `page/template.html` – źródło strony (HTML, CSS, JS). Tu wprowadzaj zmiany.
 - `page/data.json` – listy chłopców i dane zestawów (nazwy PL, seria, wiek, liczba elementów).
 - `page/catalog.json` – katalog ~2200 zestawów 2022–2026 do opcji „Dodaj zestaw po numerze”.
-- `page/img/<numer>.jpg` – zdjęcia zestawów (z Brickset, zmniejszone do 520 px), osadzane w stronie.
+- `page/img/<numer>.jpg` – zdjęcia pudełek (z BrickLink, `img.bricklink.com/ItemImage/ON/0/<numer>-1.png`, zmniejszone do 520 px), osadzane w stronie – rodzic chce jedno zdjęcie, z pudełkiem.
+- `page/img-zestaw/<numer>.jpg` – zdjęcia samych zestawów (z Brickset); używane tylko, gdy brak zdjęcia pudełka.
 - `build.py` – składa `public/index.html` (Cloudflare) i `build/artifact.html` (claude.ai). Uruchom po każdej zmianie w `page/`.
 - `public/index.html` – gotowa strona (generowana, ale commitowana, bo Workers Builds nie ma kroku build).
 - `public/_headers` – nagłówki (noindex, no-cache).

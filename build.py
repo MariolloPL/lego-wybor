@@ -4,8 +4,12 @@ import base64, json, os
 root = os.path.dirname(os.path.abspath(__file__))
 P = lambda *a: os.path.join(root, *a)
 t = open(P('page', 'template.html'), encoding='utf-8').read()
-img = {f[:-4]: 'data:image/jpeg;base64,' + base64.b64encode(open(P('page', 'img', f), 'rb').read()).decode()
-       for f in sorted(os.listdir(P('page', 'img'))) if f.endswith('.jpg')}
+# Zdjęcie na karcie: pudełko (page/img, z BrickLink); gdy go brak – zdjęcie zestawu (page/img-zestaw, z Brickset).
+img = {}
+for folder in ('img-zestaw', 'img'):
+    for f in sorted(os.listdir(P('page', folder))):
+        if f.endswith('.jpg'):
+            img[f[:-4]] = 'data:image/jpeg;base64,' + base64.b64encode(open(P('page', folder, f), 'rb').read()).decode()
 t = (t.replace('__DATA__', open(P('page', 'data.json'), encoding='utf-8').read())
       .replace('__IMG__', json.dumps(img))
       .replace('__CATALOG__', open(P('page', 'catalog.json'), encoding='utf-8').read()))
