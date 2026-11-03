@@ -199,6 +199,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:520px){.pair{gap:10px}.vs{width:42px;height:42px;font-size:17px;top:30%}.pick .body{padding:8px}.pick .meta{font-size:12px}}
 .skip{border:2px dashed var(--line);background:none;border-radius:14px;padding:10px 16px;font-weight:800;color:var(--muted)}
 .skip:hover{border-color:var(--muted)}
+.skip.none{border-color:var(--no);color:var(--no)}
+.hint{margin:0;font-size:13px;color:var(--muted);font-weight:700;text-align:center}
 .pick{position:relative}
 .pick.win{border-color:var(--heart);box-shadow:0 0 0 6px var(--heart-soft),var(--shadow);animation:winpop .55s cubic-bezier(.3,1.6,.5,1)}
 .pick.lose{animation:shake .35s;opacity:.35;transform:scale(.94)}
@@ -421,7 +423,8 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
       <ol class="howto">
         <li><b>Przegląd:</b> każdy zestaw dostaje Super!, Może albo Nie.</li>
         <li><b>Pojedynki:</b> Super i Może grają ze sobą parami. Super zaczyna z większą liczbą serduszek niż Może. Przegrana zabiera jedno serduszko, a zestaw bez serduszek odpada. Rywali dobiera się według wyniku, więc po porażce zestaw nie trafia znowu na faworyta.</li>
-        <li><b>Druga szansa:</b> zestaw, który przegrał tylko z finalistami, gra jeszcze raz o miejsce w finale. Odpadły zestaw można też wpuścić ręcznie przyciskiem „Jeszcze raz” w tabeli.</li>
+        <li><b>Nowe rozgrywki:</b> zamiast „Nie umiem wybrać” są przyciski „Oba super” (para wraca później) i „Żaden” (oba zestawy tracą serduszko), a drugą szansę dostają dwa najwyżej oceniane w Elo zestawy spośród odpadniętych. Gry rozpoczęte wcześniej kończą się po staremu.</li>
+        <li><b>Druga szansa (gry rozpoczęte wcześniej):</b> zestaw, który przegrał tylko z finalistami, gra jeszcze raz o miejsce w finale. Odpadły zestaw można też wpuścić ręcznie przyciskiem „Jeszcze raz” w tabeli.</li>
         <li><b>Wielki finał:</b> finaliści grają każdy z każdym, dwa razy (runda pierwsza i rewanż), więc jedno przypadkowe kliknięcie nie rozstrzyga o kolejności. Wynik można potem poprawić strzałkami.</li>
       </ol>
     </div>
@@ -473,7 +476,9 @@ const KEY = "lego-wybor-v2";
 
 /* ================= stan ================= */
 function newRunId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[], runId:newRunId() }; }
+// rules: 1 = zasady pierwotne (gry rozpoczęte przed zmianą, np. bieżąca gra Antka), 2 = „Oba super / Żaden” + druga szansa wg Elo
+const RULES_NOW = 2;
+function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[], runId:newRunId(), rules:RULES_NOW }; }
 function defaults(){ return { settings:{ fmin:3, fmax:5, livesS:3, livesM:2 }, kids:{ jas:blankKid(), antek:blankKid() }, history:{ jas:[], antek:[] } }; }
 // Historia zakończonych rozgrywek: zapis danych (nie obrazka) – obraz PNG generujemy z nich na żądanie.
 function cleanRuns(arr){
@@ -490,10 +495,12 @@ function cleanKid(src){
   const b = blankKid(); if (!src || typeof src !== "object") return b;
   b.stage = Math.min(3, Math.max(0, src.stage|0));
   if (src.review && typeof src.review === "object") for (const [n,v] of Object.entries(src.review)) if (okNum(n) && "SMN".includes(v) && v.length===1) b.review[n] = v;
-  if (Array.isArray(src.log)) b.log = src.log.filter(e => e && "drvf".includes(e.t) && e.t.length===1 && okNum(e.a) && (e.t==="v" || okNum(e.b)) && (e.w==null || e.w===e.a || e.w===e.b)).map(e => e.t==="v" ? {t:"v",a:e.a} : e.t==="r" ? {t:"r",a:e.a,b:e.b,w:e.w??null,c:(e.c===e.a||e.c===e.b)?e.c:e.a} : {t:e.t,a:e.a,b:e.b,w:e.w??null});
+  if (Array.isArray(src.log)) b.log = src.log.filter(e => e && "drvf".includes(e.t) && e.t.length===1 && okNum(e.a) && (e.t==="v" || okNum(e.b)) && (e.w==null || e.w===e.a || e.w===e.b)).map(e => e.t==="v" ? {t:"v",a:e.a} : e.t==="r" ? Object.assign({t:"r",a:e.a,b:e.b,w:e.w??null,c:(e.c===e.a||e.c===e.b)?e.c:e.a}, e.x==="none" && e.w==null ? {x:"none"} : {}) : Object.assign({t:e.t,a:e.a,b:e.b,w:e.w??null}, e.t==="d" && e.x==="none" && e.w==null ? {x:"none"} : {}));
   b.rank = Array.isArray(src.rank) ? src.rank.filter(okNum) : [];
   b.done = !!src.done;
   b.runId = typeof src.runId==="string" && src.runId ? src.runId.slice(0,40) : "r0";
+  // zapis bez pola rules pochodzi sprzed zmiany zasad → gra dokańcza się po staremu
+  b.rules = src.rules===2 ? 2 : (Object.keys(src).length ? 1 : RULES_NOW);
   b.extra = Array.isArray(src.extra) ? src.extra.filter(e => e && okNum(e.n)).map(e => ({ n:e.n, name: typeof e.name==="string" ? e.name.slice(0,80) : "" })) : [];
   return b;
 }
@@ -676,20 +683,28 @@ function engine(k){
   const lives={}, wins={}, losses={}, played={}, lostTo={}, met={}, chance=new Set(), streak={};
   for (const n of entrants){ lives[n] = ks.review[n]==="S" ? S.livesS : S.livesM; wins[n]=0; losses[n]=0; played[n]=0; lostTo[n]=[]; streak[n]=0; }
   const key2 = (a,b) => a<b ? a+"|"+b : b+"|"+a;
+  const rules = ks.rules || 1;
+  // Elo w trakcie pojedynków – używane w zasadach v2 do wyboru drugiej szansy (te same reguły co eloFor)
+  const elo = {}; const eloOf = n => elo[n] ?? ELO_START;
   let duelCount = 0;
   for (const e of ks.log){
     if (e.t==="v"){ if (inE.has(e.a)) lives[e.a] = Math.max(0, lives[e.a]) + 1; continue; }
     if (!inE.has(e.a) || !inE.has(e.b)) continue;
     if (e.w){ const l = e.w===e.a ? e.b : e.a; streak[e.w]++; streak[l] = 0; }
     if (e.t==="f") continue;
+    // Elo do drugiej szansy liczymy tylko z pojedynków przed finałem – finał nie może „otworzyć” nowej drugiej szansy
+    if (e.w){ const ra = eloOf(e.a), rb = eloOf(e.b), ea = 1/(1+Math.pow(10,(rb-ra)/400)), sa = e.w===e.a ? 1 : 0;
+      elo[e.a] = ra + ELO_K*(sa-ea); elo[e.b] = rb + ELO_K*((1-sa)-(1-ea)); }
     duelCount++; played[e.a]++; played[e.b]++; met[key2(e.a,e.b)] = (met[key2(e.a,e.b)]||0) + 1;
     if (e.t==="r"){
       const c = e.c || e.a, o = c===e.a ? e.b : e.a;   // c = walczy o powrót, o = finalista
       chance.add(c);
       if (e.w===c){ lives[c] = 1; lives[o]--; wins[c]++; losses[o]++; lostTo[o].push(c); }
       else if (e.w===o){ wins[o]++; losses[c]++; }
+      else if (e.x==="none"){ lives[o]--; losses[o]++; losses[c]++; }   // „Żaden”: kandydat nie wraca, finalista traci serduszko
       continue;
     }
+    if (e.x==="none"){ lives[e.a]--; lives[e.b]--; losses[e.a]++; losses[e.b]++; continue; }   // „Żaden”: oba tracą serduszko
     if (!e.w) continue;
     const l = e.w===e.a ? e.b : e.a;
     wins[e.w]++; losses[l]++; lostTo[l].push(e.w); lives[l]--;
@@ -707,10 +722,18 @@ function engine(k){
         .sort((x,y) => x.c-y.c)[0].n;
       next = hash(a+b+seed)%2 ? {t:"d", a, b} : {t:"d", a:b, b:a};
     } else {
-      candidates = out.filter(n => !chance.has(n) && lostTo[n].length && lostTo[n].every(w => lives[w] > 0))
-        .sort((x,y) => wins[y]-wins[x] || losses[x]-losses[y] || idx[x]-idx[y]);
+      let weakest = null;
+      if (rules >= 2){
+        // v2: druga szansa dla dwóch najwyżej ocenianych (Elo) zestawów spośród odpadniętych – o ile są wyżej niż najsłabszy finalista
+        weakest = alive.slice().sort((x,y) => eloOf(x)-eloOf(y) || strength(x)-strength(y) || idx[y]-idx[x])[0];
+        candidates = chance.size >= 2 || !weakest ? [] : out.filter(n => !chance.has(n) && eloOf(n) > eloOf(weakest))
+          .sort((x,y) => eloOf(y)-eloOf(x) || idx[x]-idx[y]).slice(0, 2 - chance.size);
+      } else {
+        candidates = out.filter(n => !chance.has(n) && lostTo[n].length && lostTo[n].every(w => lives[w] > 0))
+          .sort((x,y) => wins[y]-wins[x] || losses[x]-losses[y] || idx[x]-idx[y]);
+        weakest = alive.slice().sort((x,y) => strength(x)-strength(y) || idx[y]-idx[x])[0];
+      }
       if (candidates.length && alive.length){
-        const weakest = alive.slice().sort((x,y) => strength(x)-strength(y) || idx[y]-idx[x])[0];
         const c = candidates[0], seed2 = String(duelCount);
         next = hash(c+weakest+seed2)%2 ? {t:"r", a:c, b:weakest, c} : {t:"r", a:weakest, b:c, c};
       } else phaseDone = alive.length >= S.fmin || (alive.length>0 && alive.length===entrants.length);
@@ -738,7 +761,7 @@ function engine(k){
   }
   const h2h = (a,b) => { let s = 0; for (const r of (fres[key2(a,b)] || [])) s += r===a ? -1 : r===b ? 1 : 0; return s; };
   const ranking = finalists.slice().sort((x,y) => fwins[y]-fwins[x] || h2h(x,y) || lives[y]-lives[x] || wins[y]-wins[x] || idx[x]-idx[y]);
-  return { fplayed, ftotal, streak, entrants, alive, out, lives, wins, losses, played, lostTo, chance, next, phaseDone, candidates, finalists, fpairs, fres, fnext, fwins, fdone, ranking, duelCount, key2 };
+  return { rules, fplayed, ftotal, streak, entrants, alive, out, lives, wins, losses, played, lostTo, chance, next, phaseDone, candidates, finalists, fpairs, fres, fnext, fwins, fdone, ranking, duelCount, key2 };
 }
 
 /* ================= UI ================= */
@@ -1031,7 +1054,9 @@ function renderDuels(E){
   if (nx){
     const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.c))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
     inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>
-      <button class="skip" id="skip">Nie umiem wybrać – następna para</button>`;
+      ${E.rules >= 2 ? `<div class="nav"><button class="skip" id="skip">🤝 Oba super</button><button class="skip none" id="none">🙅 Żaden</button></div>
+        <p class="hint">„Oba super” – para wróci później. „Żaden” – oba zestawy tracą serduszko.</p>`
+        : `<button class="skip" id="skip">Nie umiem wybrać – następna para</button>`}`;
   } else {
     inner = `<div class="big-done">Mamy finalistów! 🏆</div><div class="nav">Do wielkiego finału wchodzi ${E.alive.length} ${plz(E.alive.length)}. Tam każdy zagra z każdym.</div>`;
   }
@@ -1100,6 +1125,17 @@ function burst(el){
   host.appendChild(b);
 }
 function toast(text){ const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+function noneDuel(){
+  const E = engine(kid); if (K().stage!==1 || E.rules < 2) return; const nx = E.next; if (!nx || busy) return;
+  busy = true;
+  document.querySelectorAll(".pick").forEach(p => p.classList.add("lose"));
+  sfx.lose();
+  setTimeout(() => {
+    K().log.push(nx.t==="r" ? { t:"r", a:nx.a, b:nx.b, w:null, c:nx.c, x:"none" } : { t:"d", a:nx.a, b:nx.b, w:null, x:"none" });
+    K().done = false; save(); busy = false; render(); run++;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 200 : 600);
+}
 function skipDuel(){
   const E = engine(kid); const nx = K().stage===2 ? E.fnext : E.next; if (!nx || busy) return;
   K().log.push(nx.t==="r" ? { t:"r", a:nx.a, b:nx.b, w:null, c:nx.c } : { t:nx.t, a:nx.a, b:nx.b, w:null }); save(); sfx.skip(); render();
@@ -1245,6 +1281,7 @@ document.addEventListener("click", e => {
     case "go": return advance();
     case "undo": return undo();
     case "skip": return skipDuel();
+    case "none": return noneDuel();
     case "switch-kid": return showPick();
     case "open-all": return showAll();
     case "open-hist": return showHist();

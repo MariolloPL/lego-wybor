@@ -41,6 +41,12 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
    = zestaw walczący o powrót). W dzienniku `a` = lewa karta, `b` = prawa. Panel rodzica pokazuje, jak często wygrywa lewa.
 4. Lista marzeń z możliwością poprawienia kolejności.
 
+Wersje zasad (`rules` w stanie dziecka, zapisywane z rozgrywką – zmiana zasad nie może zmienić gry w toku):
+- `rules: 1` (zapis bez pola `rules` = gra sprzed zmiany): przycisk „Nie umiem wybrać”, druga szansa dla zestawu, który przegrał tylko z finalistami.
+- `rules: 2` (każda nowa rozgrywka, od 2026-11-03): „🤝 Oba super” (para wraca później) i „🙅 Żaden” (`x:"none"` w dzienniku, oba tracą serduszko);
+  druga szansa dla maks. 2 najwyżej ocenianych w Elo odpadniętych zestawów, o ile mają Elo wyższe od najsłabszego finalisty
+  (Elo liczone tylko z pojedynków przed finałem). Przed zmianą silnika porównaj wynik `engine()` dla prawdziwych zapisów przed i po zmianie.
+
 Zakładka „Wszystkie zestawy” (dla rodzica): wszystkie zestawy z oznaczeniem listy (Jaś/Antek), bieżącą oceną, linkiem
 `https://promoklocki.pl/<numer>` i rankingiem Elo liczonym z dziennika pojedynków (start 1500, K = 32, remis w finale = 0,5).
 Elo jest wyłącznie informacyjne – nie wpływa na dobór par ani wynik.
