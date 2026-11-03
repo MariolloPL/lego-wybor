@@ -26,6 +26,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
   Zły kod = odpowiedź 401 i komunikat na stronie. Cały postęp jest w jednym Durable Object (`family`), więc zmiana kodu nie kasuje danych.
 - Link dla nowego urządzenia: `https://<adres>/#kod=<kod>` – kod zapisuje się w przeglądarce i znika z paska adresu.
 - Urządzenia odpytują serwer co 4 s; ostatni zapis wygrywa.
+- Jaś i Antek mogą grać jednocześnie na dwóch urządzeniach: każde urządzenie zapisuje tylko dokument grającego dziecka,
+  a zmiana u jednego dziecka nie odświeża ekranu gry drugiego. To samo dziecko na dwóch urządzeniach naraz = wygrywa późniejszy zapis.
 - Na claude.ai strona używa bazy artefaktu (`window.claude.use("db")`), bez kodu.
 
 ## Zasady selekcji (ustalone z rodzicem)

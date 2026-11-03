@@ -590,7 +590,12 @@ function onRemote(key, d, meta, firstRef){
   const before = JSON.stringify(localFor(key));
   if (key==="settings") state.settings = cleanSettings(d.settings); else if (h) state.history[h] = cleanRuns(d.runs); else state.kids[key] = cleanKid(d.kid);
   cache();
-  if (before !== JSON.stringify(localFor(key)) && !busy){ if (screen==="all") renderAll(); else if (screen==="hist") renderHist(); else if (kid) render(); else showPick(); }
+  if (before !== JSON.stringify(localFor(key)) && !busy){
+    // Jaś i Antek mogą grać jednocześnie na dwóch urządzeniach: zmiana u jednego nie odświeża ekranu gry drugiego
+    if (screen==="all") renderAll(); else if (screen==="hist") renderHist();
+    else if (kid){ if (key===kid || key==="settings") render(); }
+    else showPick();
+  }
 }
 /* kod rodzinny (tylko na własnej stronie) */
 // Kod rodzinny ustawia rodzic w Cloudflare (sekret FAMILY_CODE); tu sprawdzamy tylko format.
