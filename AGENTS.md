@@ -53,6 +53,7 @@ Elo jest wyłącznie informacyjne – nie wpływa na dobór par ani wynik.
 
 Historia wyników: po „Gotowe ✓” na liście marzeń wynik (kolejność, „tuż za finałem”, statystyki) zapisuje się w `hist-jas` /
 `hist-antek` (osobne dokumenty, jedna pozycja na rozgrywkę – `runId` w stanie dziecka; ponowne „Gotowe” aktualizuje wpis).
+Wpis zawiera też ranking Elo top 10 z całej rozgrywki (`elo`; starsze wpisy bez Elo – liczone na bieżąco, jeśli to wciąż bieżąca gra dziecka).
 Zakładka „🏆 Historia wyników” pokazuje wpisy, pozwala je usunąć i pobrać jako PNG (rysowany w canvas z danych; na claude.ai
 pobieranie jest zablokowane, więc przycisku nie ma). „🔄 Zagraj od nowa” zeruje rozgrywkę dziecka (zostają zestawy dodane po numerze).
 
