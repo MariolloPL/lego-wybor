@@ -15,7 +15,7 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 - `build.py` – składa `public/index.html` (Cloudflare) i `build/artifact.html` (claude.ai). Uruchom po każdej zmianie w `page/`.
 - `public/index.html` – gotowa strona (generowana, ale commitowana, bo Workers Builds nie ma kroku build).
 - `public/_headers` – nagłówki (noindex, no-cache).
-- `src/worker.js` – Worker: serwuje `public/` i API `/api/state/{jas|antek|settings}` (GET/PUT).
+- `src/worker.js` – Worker: serwuje `public/` i API `/api/state/{jas|antek|settings|hist-jas|hist-antek}` (GET/PUT).
 - `wrangler.jsonc` – konfiguracja Cloudflare; Durable Object `FamilyStore` (SQLite, darmowy plan).
 
 ## Zapis postępu
@@ -42,6 +42,11 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 Zakładka „Wszystkie zestawy” (dla rodzica): wszystkie zestawy z oznaczeniem listy (Jaś/Antek), bieżącą oceną, linkiem
 `https://promoklocki.pl/<numer>` i rankingiem Elo liczonym z dziennika pojedynków (start 1500, K = 32, remis w finale = 0,5).
 Elo jest wyłącznie informacyjne – nie wpływa na dobór par ani wynik.
+
+Historia wyników: po „Gotowe ✓” na liście marzeń wynik (kolejność, „tuż za finałem”, statystyki) zapisuje się w `hist-jas` /
+`hist-antek` (osobne dokumenty, jedna pozycja na rozgrywkę – `runId` w stanie dziecka; ponowne „Gotowe” aktualizuje wpis).
+Zakładka „🏆 Historia wyników” pokazuje wpisy, pozwala je usunąć i pobrać jako PNG (rysowany w canvas z danych; na claude.ai
+pobieranie jest zablokowane, więc przycisku nie ma). „🔄 Zagraj od nowa” zeruje rozgrywkę dziecka (zostają zestawy dodane po numerze).
 
 Numery zestawów z list źródłowych są nadrzędne. Podejrzane numery najpierw zweryfikuj (Brickset), nie poprawiaj ich automatycznie – zgłoś rodzicowi.
 

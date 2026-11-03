@@ -86,6 +86,23 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .pklink{font-size:13px;font-weight:800;color:var(--ink);text-decoration:none;border:1.5px solid var(--line);border-radius:99px;padding:5px 10px;white-space:nowrap}
 .pklink:hover{border-color:var(--ink)}
 @media (max-width:520px){.arow{grid-template-columns:60px minmax(0,1fr)}.arow .pklink{grid-column:2;justify-self:start}}
+#hist{padding-bottom:40px}
+.hlist{display:grid;gap:22px;padding-top:14px}
+.hkid h3{font-size:22px;margin-bottom:8px}
+.hrun{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 14px;display:grid;gap:10px;border-left:6px solid var(--c)}
+.hrun .when{font-weight:800;color:var(--muted);font-size:14px}
+.hrun ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.hrun li{display:grid;grid-template-columns:28px 64px minmax(0,1fr);gap:10px;align-items:center}
+.hrun li .p{font:800 22px/1 var(--f-display);color:var(--c);text-align:center}
+.hrun li .pic{aspect-ratio:4/3;border-radius:8px}
+.hrun li .pic img{padding:2px}
+.hrun li .nm{font-weight:800;font-size:15px;overflow-wrap:anywhere}
+.hrun li .sub{font-size:12px;color:var(--muted);font-weight:700}
+.hrun .st{font-size:13px;color:var(--muted);font-weight:700}
+.hrun .row{display:flex;gap:8px;flex-wrap:wrap}
+.done-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 18px}
+.done-actions .note{margin:0}
+.btn.big{font-size:16px;padding:11px 16px;border-radius:14px}
 .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-weight:700;padding:6px}
 
 /* ---------- nagłówek ---------- */
@@ -326,9 +343,14 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
       <div class="row"><input id="family-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="kod" maxlength="40" inputmode="text"><button class="btn solid" type="submit">Zapisz</button></div>
       <p class="note bad" id="family-note"></p>
     </form>
-    <button class="allbtn" id="open-all">📋 Wszystkie zestawy</button>
+    <div class="row" style="justify-content:center"><button class="allbtn" id="open-all">📋 Wszystkie zestawy</button><button class="allbtn" id="open-hist">🏆 Historia wyników</button></div>
     <button class="linkbtn" id="open-settings-pick">Dla rodzica: jak to działa i ustawienia</button>
   </div>
+</section>
+
+<section id="hist" hidden>
+  <div class="all-head"><div class="wrap"><div class="row"><button class="iconbtn" id="hist-back">← Wróć</button><h2>Historia wyników</h2></div></div></div>
+  <div class="wrap"><div id="hlist" class="hlist"></div></div>
 </section>
 
 <section id="all" hidden>
@@ -446,8 +468,19 @@ const STAGES = ["Przegląd", "Pojedynki", "Wielki finał", "Lista marzeń"];
 const KEY = "lego-wybor-v2";
 
 /* ================= stan ================= */
-function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[] }; }
-function defaults(){ return { settings:{ fmin:3, fmax:5, livesS:3, livesM:2 }, kids:{ jas:blankKid(), antek:blankKid() } }; }
+function newRunId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[], runId:newRunId() }; }
+function defaults(){ return { settings:{ fmin:3, fmax:5, livesS:3, livesM:2 }, kids:{ jas:blankKid(), antek:blankKid() }, history:{ jas:[], antek:[] } }; }
+// Historia zakończonych rozgrywek: zapis danych (nie obrazka) – obraz PNG generujemy z nich na żądanie.
+function cleanRuns(arr){
+  if (!Array.isArray(arr)) return [];
+  const item = x => x && okNum(x.n) ? { n:x.n, name: typeof x.name==="string" ? x.name.slice(0,120) : "", theme: typeof x.theme==="string" ? x.theme.slice(0,40) : "" } : null;
+  return arr.filter(r => r && typeof r.id==="string" && typeof r.date==="string" && Array.isArray(r.top)).slice(-60).map(r => ({
+    id: r.id.slice(0,40), date: r.date.slice(0,40),
+    top: r.top.map(item).filter(Boolean).slice(0,12), near: Array.isArray(r.near) ? r.near.map(item).filter(Boolean).slice(0,5) : [],
+    stats: r.stats && typeof r.stats==="object" ? { S:r.stats.S|0, M:r.stats.M|0, N:r.stats.N|0, duels:r.stats.duels|0, final:r.stats.final|0, left:r.stats.left|0, n:r.stats.n|0 } : {}
+  }));
+}
 const okNum = n => typeof n === "string" && /^\d{3,7}$/.test(n);
 function cleanKid(src){
   const b = blankKid(); if (!src || typeof src !== "object") return b;
@@ -456,6 +489,7 @@ function cleanKid(src){
   if (Array.isArray(src.log)) b.log = src.log.filter(e => e && "drvf".includes(e.t) && e.t.length===1 && okNum(e.a) && (e.t==="v" || okNum(e.b)) && (e.w==null || e.w===e.a || e.w===e.b)).map(e => e.t==="v" ? {t:"v",a:e.a} : e.t==="r" ? {t:"r",a:e.a,b:e.b,w:e.w??null,c:(e.c===e.a||e.c===e.b)?e.c:e.a} : {t:e.t,a:e.a,b:e.b,w:e.w??null});
   b.rank = Array.isArray(src.rank) ? src.rank.filter(okNum) : [];
   b.done = !!src.done;
+  b.runId = typeof src.runId==="string" && src.runId ? src.runId.slice(0,40) : "r0";
   b.extra = Array.isArray(src.extra) ? src.extra.filter(e => e && okNum(e.n)).map(e => ({ n:e.n, name: typeof e.name==="string" ? e.name.slice(0,80) : "" })) : [];
   return b;
 }
@@ -466,7 +500,7 @@ function cleanSettings(s){
   return { fmin:s.fmin, fmax:s.fmax, livesS:s.livesS, livesM:s.livesM };
 }
 let state = defaults();
-try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas), antek:cleanKid(o.kids&&o.kids.antek) } }; } } catch(e){}
+try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas), antek:cleanKid(o.kids&&o.kids.antek) }, history:{ jas:cleanRuns(o.history&&o.history.jas), antek:cleanRuns(o.history&&o.history.antek) } }; } } catch(e){}
 
 /* ================= zapis =================
    Od razu w przeglądarce (szybko), a w tle na wspólnym serwerze – osobny dokument dla każdego dziecka.
@@ -481,7 +515,7 @@ async function flush(){
   for (const key of [...dirty]){
     if (writing[key]) continue;
     dirty.delete(key); writing[key] = true; setSync("saving");
-    const body = key==="settings" ? { settings: state.settings } : { v:2, kid: state.kids[key] };
+    const body = bodyFor(key);
     try { await backend.set(key, JSON.parse(JSON.stringify(body))); setSync("ok"); }
     catch(e){
       if (e && e.code==="unavailable"){ dirty.add(key); setTimeout(flush, 2000 + Math.random()*2000); setSync("retry"); }
@@ -492,6 +526,13 @@ async function flush(){
   }
   if (dirty.size && backend){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
 }
+const SYNC_KEYS = ["jas","antek","settings","hist-jas","hist-antek"];
+const histKid = key => key.startsWith("hist-") ? key.slice(5) : null;
+function bodyFor(key){
+  const h = histKid(key);
+  return key==="settings" ? { settings: state.settings } : h ? { v:1, runs: state.history[h] } : { v:2, kid: state.kids[key] };
+}
+function localFor(key){ const h = histKid(key); return key==="settings" ? state.settings : h ? state.history[h] : state.kids[key]; }
 function setSync(s){
   if (s==="saving" || s==="ok") dbState = "ok";
   if (s==="local" || s==="auth" || s==="retry") dbState = s;
@@ -537,17 +578,19 @@ function restBackend(code){
 function onRemote(key, d, meta, firstRef){
   if (!meta.fromCache && dbState!=="ok") setSync("ok");
   if (meta.pending || writing[key] || dirty.has(key)) return;
-  const usable = d && (key==="settings" ? !!d.settings : d.v===2 && !!d.kid);
+  const h = histKid(key);
+  const usable = d && (key==="settings" ? !!d.settings : h ? d.v===1 && Array.isArray(d.runs) : d.v===2 && !!d.kid);
   if (!usable){
     // pierwszy start: przenieś na serwer to, co było zapisane na tym urządzeniu
-    if (firstRef.first && !meta.fromCache){ firstRef.first = false; const has = key==="settings" || Object.keys(state.kids[key].review).length; if (has) save(key); }
+    if (firstRef.first && !meta.fromCache){ firstRef.first = false;
+      const has = key==="settings" || (h ? state.history[h].length : Object.keys(state.kids[key].review).length); if (has) save(key); }
     return;
   }
   firstRef.first = false;
-  const before = JSON.stringify(key==="settings" ? state.settings : state.kids[key]);
-  if (key==="settings") state.settings = cleanSettings(d.settings); else state.kids[key] = cleanKid(d.kid);
+  const before = JSON.stringify(localFor(key));
+  if (key==="settings") state.settings = cleanSettings(d.settings); else if (h) state.history[h] = cleanRuns(d.runs); else state.kids[key] = cleanKid(d.kid);
   cache();
-  if (before !== JSON.stringify(key==="settings" ? state.settings : state.kids[key]) && !busy){ if (screen==="all") renderAll(); else if (kid) render(); else showPick(); }
+  if (before !== JSON.stringify(localFor(key)) && !busy){ if (screen==="all") renderAll(); else if (screen==="hist") renderHist(); else if (kid) render(); else showPick(); }
 }
 /* kod rodzinny (tylko na własnej stronie) */
 // Kod rodzinny ustawia rodzic w Cloudflare (sekret FAMILY_CODE); tu sprawdzamy tylko format.
@@ -580,7 +623,7 @@ async function connectDb(){
   }
   if (!backend){ clearTimeout(timer); setSync("local"); return; }
   document.getElementById("family").hidden = true;
-  for (const key of ["jas","antek","settings"]){
+  for (const key of SYNC_KEYS){
     const firstRef = { first:true };
     backend.listen(key, (d, meta) => { if (!meta.fromCache) clearTimeout(timer); onRemote(key, d, meta, firstRef); },
       e => { if (e && e.code==="auth") authFailed(); else setSync("local"); });
@@ -734,7 +777,7 @@ function eloFor(k){
   return { rating: r, games: g };
 }
 function showAll(){
-  screen = "all"; kid = null;
+  screen = "all"; kid = null; document.getElementById("hist").hidden = true;
   document.getElementById("pick").hidden = true; document.getElementById("app").hidden = true; document.getElementById("all").hidden = false;
   renderAll(); window.scrollTo(0,0);
 }
@@ -769,8 +812,88 @@ function renderAll(){
 document.getElementById("all-q").addEventListener("input", renderAll);
 document.getElementById("all-sort").addEventListener("change", renderAll);
 
+/* ---------- historia wyników ---------- */
+const KIDCOLOR = { jas:"#1d6bd0", antek:"#e46a0a" };
+function snapshotRun(k){
+  const prev = kid; kid = k;
+  const E = engine(k), ks = K(), order = listOrder(E), c = reviewCounts(), side = sideStats(k);
+  const near = E.out.slice().sort((x,y) => E.wins[y]-E.wins[x] || E.losses[x]-E.losses[y]).slice(0,3);
+  const item = n => { const s = getSet(n); return { n, name: s.name || "", theme: s.theme || "" }; };
+  const run = { id: ks.runId, date: new Date().toISOString(), top: order.map(item), near: near.map(item),
+    stats: { S:c.S, M:c.M, N:c.N, duels:E.duelCount, final:E.fplayed, left:side.left, n:side.n } };
+  kid = prev;
+  const h = state.history[k]; const i = h.findIndex(r => r.id===run.id);
+  if (i >= 0){ run.date = h[i].date; h[i] = run; } else h.push(run);   // ta sama rozgrywka = aktualizacja, nie duplikat
+  save("hist-" + k);
+}
+function newGame(k){
+  const old = state.kids[k];
+  state.kids[k] = Object.assign(blankKid(), { extra: old.extra });   // zestawy dodane po numerze zostają na liście
+  save(k); openKid(k);
+}
+function fmtDate(iso){ try { return new Date(iso).toLocaleString("pl-PL", { day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" }); } catch(e){ return iso; } }
+function showHist(){
+  screen = "hist"; kid = null;
+  for (const id of ["pick","app","all"]) document.getElementById(id).hidden = true;
+  document.getElementById("hist").hidden = false; renderHist(); window.scrollTo(0,0);
+}
+const CAN_DOWNLOAD = !window.claude;   // na claude.ai pobieranie plików jest zablokowane
+function renderHist(){
+  document.getElementById("hlist").innerHTML = ["jas","antek"].map(k => {
+    const runs = state.history[k].slice().reverse();
+    return `<section class="hkid"><h3>${KIDNAME[k]}</h3>${runs.length ? runs.map(r => `
+      <article class="hrun" style="--c:${KIDCOLOR[k]}">
+        <div class="when">Lista marzeń ${KIDGEN[k]} · ${esc(fmtDate(r.date))}</div>
+        <ol>${r.top.map((x,i) => `<li><span class="p">${i+1}</span>${picHTML(SETS[x.n] || { n:x.n, name:x.name }, false)}<div style="min-width:0"><div class="nm">${esc(x.name || "Zestaw " + x.n)}</div><div class="sub">Nr ${x.n}${x.theme ? " · " + esc(x.theme) : ""}</div></div></li>`).join("")}</ol>
+        ${r.near.length ? `<div class="st">Tuż za finałem: ${r.near.map(x => esc(x.name || x.n)).join(", ")}</div>` : ""}
+        <div class="st">Przegląd: ❤ ${r.stats.S||0} · ? ${r.stats.M||0} · ✕ ${r.stats.N||0} · pojedynków ${r.stats.duels||0} + finał ${r.stats.final||0}${r.stats.n ? ` · lewa karta ${Math.round(100*r.stats.left/r.stats.n)}%` : ""}</div>
+        <div class="row">${CAN_DOWNLOAD ? `<button class="btn" data-png="${k}|${esc(r.id)}">⬇ Pobierz obraz</button>` : ""}<button class="btn danger" data-delrun="${k}|${esc(r.id)}">Usuń</button></div>
+      </article>`).join("") : `<p class="st">Jeszcze brak zakończonych rozgrywek.</p>`}</section>`;
+  }).join("");
+}
+function delRun(spec, btn){
+  if (!btn.dataset.armed){ btn.dataset.armed = "1"; btn.textContent = "Na pewno usunąć?"; return; }
+  const [k, id] = spec.split("|"); state.history[k] = state.history[k].filter(r => r.id!==id); save("hist-" + k); renderHist();
+}
+function loadImg(src){ return new Promise(res => { if (!src) return res(null); const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; }); }
+function wrapText(ctx, text, maxW){
+  const words = text.split(" "), lines = []; let line = "";
+  for (const w of words){ const t2 = line ? line + " " + w : w; if (ctx.measureText(t2).width > maxW && line){ lines.push(line); line = w; } else line = t2; }
+  if (line) lines.push(line); return lines.slice(0,2);
+}
+async function runPNG(spec){
+  const [k, id] = spec.split("|"); const r = state.history[k].find(x => x.id===id); if (!r) return;
+  try { await document.fonts.ready; } catch(e){}
+  const W = 1080, rowH = 200, top = 230, H = top + r.top.length*rowH + 110;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#edf1f6"; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = KIDCOLOR[k]; ctx.fillRect(0,0,W,170);
+  for (let i=0;i<6;i++){ ctx.fillStyle = "#f4c20d"; ctx.beginPath(); ctx.arc(W-70-i*56, 40, 17, 0, Math.PI*2); ctx.fill(); }
+  ctx.fillStyle = "#fff"; ctx.font = '800 64px "Baloo 2", sans-serif'; ctx.fillText("Lista marzeń " + KIDGEN[k], 56, 112);
+  ctx.font = '700 28px "Nunito", sans-serif'; ctx.fillText(fmtDate(r.date), 56, 152);
+  const imgs = await Promise.all(r.top.map(x => loadImg(IMG[x.n])));
+  r.top.forEach((x,i) => {
+    const y = top + i*rowH - 30;
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(40, y, W-80, rowH-24, 24) : ctx.rect(40, y, W-80, rowH-24); ctx.fill();
+    ctx.fillStyle = i===0 ? "#f4c20d" : KIDCOLOR[k]; ctx.font = '800 72px "Baloo 2", sans-serif'; ctx.textAlign = "center"; ctx.fillText(String(i+1), 110, y + 110); ctx.textAlign = "left";
+    const im = imgs[i];
+    if (im){ const bw = 220, bh = 150, s = Math.min(bw/im.width, bh/im.height), w = im.width*s, h = im.height*s; ctx.drawImage(im, 170 + (bw-w)/2, y + 13 + (bh-h)/2, w, h); }
+    ctx.fillStyle = "#1a2332"; ctx.font = '800 38px "Baloo 2", sans-serif';
+    wrapText(ctx, x.name || ("Zestaw " + x.n), W-80-440).forEach((ln, j) => ctx.fillText(ln, 420, y + 70 + j*42));
+    ctx.fillStyle = "#5a6679"; ctx.font = '700 26px "Nunito", sans-serif'; ctx.fillText("Nr " + x.n + (x.theme ? " · " + x.theme : ""), 420, y + 150);
+  });
+  ctx.fillStyle = "#5a6679"; ctx.font = '700 24px "Nunito", sans-serif';
+  ctx.fillText(`Przegląd: Super ${r.stats.S||0} · Może ${r.stats.M||0} · Nie ${r.stats.N||0} · pojedynków ${(r.stats.duels||0)+(r.stats.final||0)}`, 56, H - 48);
+  cv.toBlob(blob => {
+    if (!blob) return;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = `lista-marzen-${k}-${r.date.slice(0,10)}.png`; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }, "image/png");
+}
+
 function showPick(){
-  kid = null; screen = "pick"; document.getElementById("all").hidden = true;
+  kid = null; screen = "pick"; document.getElementById("all").hidden = true; document.getElementById("hist").hidden = true;
   document.getElementById("st-jas").textContent = kidSummary("jas");
   document.getElementById("st-antek").textContent = kidSummary("antek");
   document.getElementById("pick").hidden = false; document.getElementById("app").hidden = true;
@@ -992,6 +1115,9 @@ function renderList(E){
   document.getElementById("main").innerHTML = `
     <div class="final-head"><h2>${fixed ? "Lista marzeń " + KIDGEN[kid] : "Ustaw kolejność"}</h2>
       ${fixed ? `<button class="iconbtn" id="edit-rank">Zmień kolejność</button>` : ""}</div>
+    ${fixed ? `<div class="done-actions"><span class="note">✓ Zapisano w historii wyników</span>
+      ${CAN_DOWNLOAD ? `<button class="btn big" data-png="${kid}|${esc(ks.runId)}">⬇ Pobierz obraz</button>` : ""}
+      <button class="btn big" id="new-game">🔄 Zagraj od nowa</button></div>` : ""}
     <ol class="rank">${order.map((n,i) => { const s = getSet(n); return `<li class="ritem"><span class="pos">${i+1}</span>${picHTML(s,false)}
       <div style="min-width:0"><h3>${title(s)}</h3><div class="meta">Nr ${s.n} · ${metaLine(s)}</div>
       <div class="links"><a href="https://www.lego.com/pl-pl/search?q=${s.n}" target="_blank" rel="noopener">LEGO.com</a><a href="https://brickset.com/sets/${s.n}-1" target="_blank" rel="noopener">Brickset</a></div></div>
@@ -1040,7 +1166,7 @@ function undo(){
 function advance(){
   const ks = K(); const E = engine(kid); const st = ks.stage;
   if (st===0){ const c = reviewCounts(); if (c.U && !armed){ armed = true; return renderDock(E); } armed = false; }
-  if (st===3){ ks.rank = listOrder(E); ks.done = true; editRank = false; save(); sfx.fanfare(); return render(); }
+  if (st===3){ ks.rank = listOrder(E); ks.done = true; editRank = false; save(); snapshotRun(kid); sfx.fanfare(); return render(); }
   if (st+1 > maxStage(E)) return;
   ks.stage = st+1; save(); if (st===1) sfx.fanfare(); render(); window.scrollTo(0,0);
 }
@@ -1083,6 +1209,8 @@ document.addEventListener("click", e => {
   if (t.matches(".kidbtn")) return openKid(t.dataset.kid);
   if (t.dataset.dec) return decide(t.dataset.n, t.dataset.dec);
   if (t.dataset.win) return playDuel(t.dataset.win);
+  if (t.dataset.png) return runPNG(t.dataset.png);
+  if (t.dataset.delrun) return delRun(t.dataset.delrun, t);
   if (t.dataset.afilter){ allFilter = t.dataset.afilter; return renderAll(); }
   if (t.dataset.view){ view = t.dataset.view; filter = "all"; back = -1; return render(); }
   if (t.dataset.filter){ filter = t.dataset.filter; return render(); }
@@ -1102,6 +1230,9 @@ document.addEventListener("click", e => {
     case "skip": return skipDuel();
     case "switch-kid": return showPick();
     case "open-all": return showAll();
+    case "open-hist": return showHist();
+    case "hist-back": return showPick();
+    case "new-game": if (!t.dataset.armed){ t.dataset.armed = "1"; t.textContent = "Na pewno? Wynik zostaje w historii – kliknij jeszcze raz"; return; } return newGame(kid);
     case "all-back": return showPick();
     case "open-settings": case "open-settings-pick": return openSettings();
     case "close-settings": return document.getElementById("settings").close();

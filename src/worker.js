@@ -3,7 +3,7 @@
 // (Settings → Variables and Secrets). Kodu nie ma w repozytorium.
 import { DurableObject } from "cloudflare:workers";
 
-const KEYS = new Set(["jas", "antek", "settings"]);
+const KEYS = new Set(["jas", "antek", "settings", "hist-jas", "hist-antek"]);
 const norm = (x) => String(x || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 
 // porównanie w stałym czasie, żeby nie zdradzać długości zgodnego fragmentu
@@ -22,7 +22,7 @@ export default {
     const url = new URL(request.url);
     // diagnostyka: czy sekret jest ustawiony (bez ujawniania wartości)
     if (url.pathname === "/api/health") return json({ ok: true, familyCodeSet: !!norm(env.FAMILY_CODE) });
-    const m = url.pathname.match(/^\/api\/state\/([a-z]+)$/);
+    const m = url.pathname.match(/^\/api\/state\/([a-z-]+)$/);
     if (!m) return env.ASSETS.fetch(request);
     const key = m[1];
     if (!KEYS.has(key)) return json({ error: "not_found" }, 404);
