@@ -2,6 +2,7 @@
 
 Strona, na której Jaś (8 lat) i Antek (6 lat) zawężają listy wymarzonych zestawów LEGO.
 Wdrażana przez Cloudflare Workers (Workers Builds podpięte do tego prywatnego repozytorium): każdy push na `main` jest na żywo po ok. 30 s.
+Adres: https://lego.mariollo.com (custom domain w `wrangler.jsonc`; zapasowo https://lego-wybor.mariollo.workers.dev).
 Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifact/VnzeDL4yzZvFZL8sYbuzbA
 
 ## Pliki

@@ -3,6 +3,9 @@
   "name": "lego-wybor",
   "main": "src/worker.js",
   "compatibility_date": "2025-09-01",
+  // Własny adres (domena mariollo.com jest w Cloudflare); Cloudflare sam zakłada rekord DNS i certyfikat.
+  "routes": [{ "pattern": "lego.mariollo.com", "custom_domain": true }],
+  // Stary adres lego-wybor.mariollo.workers.dev zostaje na razie jako zapasowy.
   "workers_dev": true,
   // Workery z Durable Objects nie obsługują preview URL.
   "preview_urls": false,
