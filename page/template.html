@@ -53,7 +53,6 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .kids{display:grid;grid-template-columns:repeat(2,minmax(0,260px));gap:20px;width:100%;justify-content:center}
 .kidbtn{position:relative;border:0;border-radius:22px;padding:34px 16px 22px;background:var(--c);color:#fff;display:grid;gap:6px;justify-items:center;box-shadow:0 6px 0 var(--cd),var(--shadow);transition:transform .12s,box-shadow .12s}
 .kidbtn::before{content:"";position:absolute;top:-14px;left:50%;width:120px;height:28px;transform:translateX(-50%);background:radial-gradient(circle at 25% 50%,var(--c) 12px,transparent 13px),radial-gradient(circle at 75% 50%,var(--c) 12px,transparent 13px)}
-.kidbtn:hover{transform:translateY(-2px)}
 .kidbtn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--cd),var(--shadow)}
 .kidbtn .nm{font:800 clamp(38px,7vw,54px)/1 var(--f-display)}
 .kidbtn .st{font-weight:700;font-size:15px;opacity:.95}
@@ -160,7 +159,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .act.no{background:var(--no-soft);border-color:var(--no);color:var(--no)}
 .act.maybe{background:var(--maybe-soft);border-color:var(--maybe);color:var(--maybe-ink)}
 .act.yes{background:var(--yes-soft);border-color:var(--yes);color:var(--yes)}
-.act:hover{filter:brightness(.97);transform:translateY(-1px)}
 .act.no[aria-pressed="true"]{background:var(--no);color:var(--on-solid)}
 .act.maybe[aria-pressed="true"]{background:var(--maybe);color:#1a2332}
 .act.yes[aria-pressed="true"]{background:var(--yes);color:var(--on-solid)}
@@ -189,7 +187,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .banner{background:var(--maybe-soft);border:2px solid var(--maybe);border-radius:14px;padding:8px 14px;font-weight:800;text-align:center;max-width:640px}
 .pair{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,100%)}
 .pick{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border-radius:22px;box-shadow:var(--shadow);border:3px solid var(--line);display:flex;flex-direction:column;overflow:hidden;min-width:0;transition:transform .2s,border-color .15s,opacity .25s}
-.pick:hover{border-color:var(--kid);transform:translateY(-3px)}
 .pick:focus-visible{outline:3px solid var(--kid);outline-offset:3px}
 .pick .pic{aspect-ratio:1/1}
 .pick .body{padding:10px 12px 12px;text-align:center}
@@ -325,6 +322,13 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
   .msg{order:5;flex-basis:100%;font-size:13px;min-width:0}
   .go{padding:12px 16px;font-size:17px}
   .undo{padding:9px 11px}
+}
+/* Podświetlenie po najechaniu tylko przy prawdziwej myszce. Na telefonie i tablecie dotknięcie „zostaje” jako hover
+   i nowa karta, która pojawia się w tym samym miejscu, wyglądałaby na wybraną. */
+@media (hover:hover) and (pointer:fine){
+  .pair:not(.fresh) .pick:hover{border-color:var(--kid);transform:translateY(-3px)}
+  .act:hover{filter:brightness(.97);transform:translateY(-1px)}
+  .kidbtn:hover{transform:translateY(-2px)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -1046,6 +1050,8 @@ function tableHTML(E){
     <div class="tsec">W grze</div>${alive.map(n=>row(n,false)).join("")}
     ${out.length ? `<div class="tsec">Odpadły</div>${out.map(n=>row(n,true)).join("")}` : ""}</div></details>`;
 }
+const lastPointer = { x:0, y:0 };
+addEventListener("pointerdown", e => { lastPointer.x = e.clientX; lastPointer.y = e.clientY; }, true);
 let run = 0; // pojedynki rozegrane bez przerwy w tym podejściu
 const MILESTONES = { 10:"10 pojedynków! Super ci idzie!", 25:"25 pojedynków! Mistrz wyboru!", 50:"50 pojedynków! Niesamowite!", 75:"75 pojedynków! Legenda!", 100:"100 pojedynków! Rekord!" };
 const BURST = ["var(--heart)","var(--stud)","#1d6bd0","#e46a0a","#178a4a","#8e44c9"];
@@ -1069,6 +1075,12 @@ function playDuel(winner){
   run++;
   setTimeout(() => {
     K().log.push(nx.t==="r" ? { t:"r", a:nx.a, b:nx.b, w:winner, c:nx.c } : { t:nx.t, a:nx.a, b:nx.b, w:winner }); K().done = false; save(); busy = false; render();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // nowa para startuje bez śladu poprzedniego wyboru
+    // kursor zostaje nad kartą, w którą kliknięto – podświetlenie nowej pary dopiero po ruchu myszką
+    const pair = document.querySelector(".pair");
+    if (pair){ pair.classList.add("fresh"); const sx = lastPointer.x, sy = lastPointer.y;
+      const wake = e => { if (Math.abs(e.clientX-sx) + Math.abs(e.clientY-sy) < 4) return; pair.classList.remove("fresh"); removeEventListener("pointermove", wake); };
+      addEventListener("pointermove", wake); }
     if (MILESTONES[run]){ toast("⚡ " + MILESTONES[run]); sfx.fanfare(); }
   }, reduce ? 250 : 1000);
 }
