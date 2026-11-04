@@ -33,7 +33,11 @@
   color-scheme:dark;}
 body[data-kid="antek"]{--kid:var(--antek); --kid-soft:var(--antek-soft)}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;scroll-padding-top:150px;scroll-padding-bottom:130px}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:150px;scroll-padding-bottom:130px;touch-action:manipulation}
+/* szybkie klikanie na iPhonie nie powiększa strony; przytrzymanie nie zaznacza tekstu ani nie otwiera menu zdjęcia */
+button,a,.card,.pick,.act,.lcard{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.card,.pick,.act,.lcard,.kidbtn,.step{-webkit-user-select:none;user-select:none}
+.pic img{-webkit-touch-callout:none;-webkit-user-drag:none}
 body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.45 var(--f-body);padding-top:env(safe-area-inset-top,0px)}
 img{max-width:100%}
 [hidden]{display:none!important}
@@ -188,7 +192,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 10px;font-weight:700}
 
 /* tryb po kolei */
-.solo{display:grid;justify-items:center;gap:14px;padding-bottom:150px}
+.solo{display:grid;justify-items:center;gap:14px;padding-bottom:calc(170px + env(safe-area-inset-bottom,0px))}
 .solo .card{width:min(560px,100%)}
 .solo .pic{aspect-ratio:auto;height:min(40vh,420px);width:100%}
 .solo .body{padding:14px 18px 6px;text-align:center}
@@ -333,7 +337,7 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
   body.compact .goal p{display:none}
   .tools{padding-block:6px 10px}
   .solo{gap:8px}
-  .solo .pic{height:max(170px,calc(100vh - 560px))}
+  .solo .pic{height:min(46vh,420px);height:min(46svh,420px)}
   .solo .body{padding:8px 12px 2px}
   .solo .body h3{font-size:21px}
   .solo .meta{font-size:13px}
@@ -351,6 +355,24 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
   .pair:not(.fresh) .pick:hover{border-color:var(--kid);transform:translateY(-3px)}
   .act:hover{filter:brightness(.97);transform:translateY(-1px)}
   .kidbtn:hover{transform:translateY(-2px)}
+}
+/* Niskie ekrany telefonów (np. z paskami Safari): ciaśniejszy nagłówek i pasek, żeby karta z przyciskami mieściła się bez przewijania */
+@media (max-width:640px) and (max-height:820px){
+  .toprow{padding-block:5px}
+  .sync{max-width:96px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .steps{padding-bottom:6px}
+  .step{padding:3px 9px}
+  .step small{display:none}
+  body.compact .goal{display:none}
+  .tools{padding-block:4px 6px}
+  .dockrow{padding-block:6px}
+  body.compact .msg{display:none}
+  .go{padding:10px 14px}
+  .undo{padding:8px 10px}
+  .solo{gap:6px}
+  .solo .body{padding:6px 12px 0}
+  .solo .acts{padding:8px 10px 10px}
+  .solo .act{min-height:52px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -1051,6 +1073,7 @@ function render(){
     `<button class="step ${i<ks.stage || (i===3 && ks.done) ? "done":""}" data-step="${i}" ${i<=ms && !(locked && i>0)?"":"disabled"} ${i===ks.stage?'aria-current="step"':""}><small>Etap ${i+1}</small><b>${nm}</b></button>`).join("");
   document.body.classList.toggle("compact", ks.stage===1 || ks.stage===2 || (ks.stage===0 && view==="solo"));
   [renderReview, renderDuels, renderFinal, renderList][ks.stage](E);
+  fitCards();
   renderDock(E);
 }
 
@@ -1117,6 +1140,22 @@ function renderSolo(){
     ${cardHTML(q[cursor], true)}
     <div class="nav"><button class="iconbtn" data-solo="prev" ${seen.length?"":"disabled"}>← Poprzedni</button><button class="iconbtn" data-solo="skip">Pomiń na razie →</button></div>`;
 }
+// Dopasuj wysokość zdjęcia tak, żeby przyciski Nie / Może / Super! (i karty pojedynku) nie chowały się pod dolnym paskiem
+function fitCards(){
+  requestAnimationFrame(() => {
+    const dock = document.getElementById("dock"); if (!dock || dock.hidden || screen!=="app") return;
+    const limit = window.innerHeight - dock.getBoundingClientRect().height - 10;   // dolna granica widocznej części (bez paska)
+    const fit = (picSel, bottomSel, min) => {
+      const pics = document.querySelectorAll(picSel), bottom = document.querySelector(bottomSel); if (!pics.length || !bottom) return;
+      pics.forEach(p => { p.style.height = ""; p.style.aspectRatio = ""; });
+      const over = bottom.getBoundingClientRect().bottom + window.scrollY - limit;
+      if (over > 0) pics.forEach(p => { const h = p.getBoundingClientRect().height; p.style.aspectRatio = "auto"; p.style.height = Math.max(min, h - over) + "px"; });
+    };
+    fit(".solo .card .pic", ".solo .card .acts", 120);
+    fit(".pair .pick .pic", ".pair", 110);
+  });
+}
+addEventListener("resize", fitCards); addEventListener("orientationchange", () => setTimeout(fitCards, 300));
 function soloNav(dir){
   if (dir==="prev") back = back < 0 ? seen.length-1 : Math.max(0, back-1);
   else if (dir==="next") back = back+1 < seen.length ? back+1 : -1;
