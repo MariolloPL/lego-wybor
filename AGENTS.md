@@ -42,6 +42,10 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 - Nowa gra („Zagraj od nowa” albo wyczyszczenie w panelu) zaczyna się ekranem wyboru listy: Jaś – `gazetka-jas` / `rok-2026`,
   Antek – `gazetka-antek` / `rok-2026`. Przed resetem zakończona gra zapisuje do historii ranking Elo, jeśli go nie miała.
 
+- Zestawy na stałe na KAŻDEJ liście (prośba rodzica): `ALWAYS` w template.html – teraz 40719 (Tradycyjny zestaw szachów).
+  Dopisywane na końcu listy, jeśli jej ich brak (`fullList`). Nie dopisuj ich do `data.json` – kolejność list ma znaczenie dla silnika.
+- Kolejność w przeglądzie: jak w liście (rok-2026 rosnąco po numerze, gazetki w kolejności spisanej przez rodzica). Losowania na razie nie ma.
+
 ## Zasady selekcji (ustalone z rodzicem)
 
 1. Przegląd: Super! / Może / Nie. Trzeba obejrzeć WSZYSTKIE zestawy – dopiero wtedy odblokowują się pojedynki (bez pomijania).

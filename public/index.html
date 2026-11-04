@@ -697,7 +697,15 @@ async function connectDb(){
 }
 
 /* ================= dane zestawów ================= */
-function listOf(k){ const L = LISTS[state.kids[k].list]; const b = L ? L.sets : []; const ex = state.kids[k].extra.map(e => e.n).filter(n => !b.includes(n)); return ex.length ? b.concat(ex) : b; }
+// Zestawy dodane na stałe do KAŻDEJ listy (prośba rodzica): pojawiają się na końcu listy, jeśli jej jeszcze nie ma.
+const ALWAYS = ["40719"];   // Tradycyjny zestaw szachów
+const LISTS_FULL = {};
+function fullList(id){
+  if (!LISTS[id]) return [];
+  if (!LISTS_FULL[id]){ const s = LISTS[id].sets; LISTS_FULL[id] = s.concat(ALWAYS.filter(n => !s.includes(n))); }
+  return LISTS_FULL[id];
+}
+function listOf(k){ const b = state.kids[k].list ? fullList(state.kids[k].list) : []; const ex = state.kids[k].extra.map(e => e.n).filter(n => !b.includes(n)); return ex.length ? b.concat(ex) : b; }
 function getSet(n){
   if (SETS[n]) return SETS[n];
   const c = CATALOG[n]; let own = "";
@@ -852,8 +860,8 @@ const STLABEL = { S:"❤", M:"?", N:"✕", U:"·" };
 // Wszystkie zestawy ze wszystkich list (nie tylko z list, na których chłopcy teraz grają) + zestawy dodane po numerze
 function allSets(listId){
   const out = [], seen = new Set(), add = n => { if (!seen.has(n)){ seen.add(n); out.push(n); } };
-  if (listId && LISTS[listId]) LISTS[listId].sets.forEach(add);
-  else { for (const id in LISTS) LISTS[id].sets.forEach(add); for (const k of ["jas","antek"]) listOf(k).forEach(add); }
+  if (listId && LISTS[listId]) fullList(listId).forEach(add);
+  else { for (const id in LISTS) fullList(id).forEach(add); for (const k of ["jas","antek"]) listOf(k).forEach(add); }
   return out;
 }
 /* Elo – tylko informacja dla rodzica, nie wpływa na grę.
@@ -883,7 +891,7 @@ function showAll(){
 function renderAll(){
   const pd = document.getElementById("price-date"); if (pd) pd.textContent = PRICE_DATE ? new Date(PRICE_DATE).toLocaleDateString("pl-PL", { day:"numeric", month:"long", year:"numeric" }) : "–";
   const lsel = document.getElementById("all-list");
-  if (!lsel.options.length) lsel.innerHTML = `<option value="">Lista: wszystkie listy</option>` + Object.entries(LISTS).map(([id,L]) => `<option value="${id}">Lista: ${esc(L.name)} (${L.sets.length})</option>`).join("");
+  if (!lsel.options.length) lsel.innerHTML = `<option value="">Lista: wszystkie listy</option>` + Object.entries(LISTS).map(([id,L]) => `<option value="${id}">Lista: ${esc(L.name)} (${fullList(id).length})</option>`).join("");
   const all = allSets(lsel.value);
   const elo = { jas: eloFor("jas"), antek: eloFor("antek") };
   const sj = new Set(listOf("jas")), sa = new Set(listOf("antek"));
@@ -1060,7 +1068,7 @@ function renderListChoice(){
     <div class="lchoice">${KID_LISTS[kid].map(id => { const L = LISTS[id];
       const sample = L.sets.filter(n => IMG[n]).slice(0, 40).filter((n,i) => i % 8 === 0).slice(0,4);
       return `<button class="lcard" data-list="${id}"><div class="lthumbs">${sample.map(n => picHTML(getSet(n), false)).join("")}</div>
-        <div class="lname">${esc(L.name)}</div><div class="lcount">${L.sets.length} ${plz(L.sets.length)}</div></button>`; }).join("")}</div>`;
+        <div class="lname">${esc(L.name)}</div><div class="lcount">${fullList(id).length} ${plz(fullList(id).length)}</div></button>`; }).join("")}</div>`;
 }
 function chooseList(id){ if (!KID_LISTS[kid].includes(id)) return; K().list = id; save(); view = "solo"; render(); window.scrollTo(0,0); }
 function render(){
