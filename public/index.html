@@ -436,7 +436,7 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
       <ol class="howto">
         <li><b>Przegląd:</b> każdy zestaw dostaje Super!, Może albo Nie.</li>
         <li><b>Pojedynki:</b> Super i Może grają ze sobą parami. Super zaczyna z większą liczbą serduszek niż Może. Przegrana zabiera jedno serduszko, a zestaw bez serduszek odpada. Rywali dobiera się według wyniku, więc po porażce zestaw nie trafia znowu na faworyta.</li>
-        <li><b>Nowe rozgrywki:</b> zamiast „Nie umiem wybrać” są przyciski „Oba super” (para wraca później) i „Żaden” (oba zestawy tracą serduszko), a drugą szansę dostają dwa najwyżej oceniane w Elo zestawy spośród odpadniętych. Gry rozpoczęte wcześniej kończą się po staremu.</li>
+        <li><b>Przyciski „Oba super” i „Żaden”</b> (we wszystkich grach): „Oba super” – para wraca później, „Żaden” – oba zestawy tracą serduszko. <b>Nowe rozgrywki:</b> drugą szansę dostają dwa najwyżej oceniane w Elo zestawy spośród odpadniętych. Gry rozpoczęte wcześniej kończą się po staremu.</li>
         <li><b>Druga szansa (gry rozpoczęte wcześniej):</b> zestaw, który przegrał tylko z finalistami, gra jeszcze raz o miejsce w finale. Odpadły zestaw można też wpuścić ręcznie przyciskiem „Jeszcze raz” w tabeli.</li>
         <li><b>Wielki finał:</b> finaliści grają każdy z każdym, dwa razy (runda pierwsza i rewanż), więc jedno przypadkowe kliknięcie nie rozstrzyga o kolejności. Wynik można potem poprawić strzałkami.</li>
       </ol>
@@ -1115,7 +1115,7 @@ function renderDuels(E){
   if (nx){
     const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.c))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
     inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>
-      ${E.rules >= 2 ? `<div class="nav"><button class="skip" id="skip">🤝 Oba super</button><button class="skip none" id="none">🙅 Żaden</button></div>
+      ${true ? `<div class="nav"><button class="skip" id="skip">🤝 Oba super</button><button class="skip none" id="none">🙅 Żaden</button></div>
         <p class="hint">„Oba super” – para wróci później. „Żaden” – żaden z nich nie jest tym, co najbardziej chcesz.</p>`
         : `<button class="skip" id="skip">Nie umiem wybrać – następna para</button>`}`;
   } else {
@@ -1187,7 +1187,7 @@ function burst(el){
 }
 function toast(text){ const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
 function noneDuel(){
-  const E = engine(kid); if (K().stage!==1 || E.rules < 2) return; const nx = E.next; if (!nx || busy) return;
+  const E = engine(kid); if (K().stage!==1) return; const nx = E.next; if (!nx || busy) return;   // „Żaden” we wszystkich grach (silnik obsługuje x:"none" niezależnie od wersji zasad)
   busy = true;
   document.querySelectorAll(".pick").forEach(p => p.classList.add("lose"));
   sfx.lose();
