@@ -2,4 +2,12 @@
   X-Robots-Tag: noindex, nofollow
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
+
+/
   Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/img/*
+  Cache-Control: public, max-age=2592000

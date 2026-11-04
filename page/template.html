@@ -103,6 +103,15 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .elo10 ol{margin-top:8px}
 .elo10 li .p{font-size:16px !important;color:var(--muted) !important}
 .elo10 li .sub b{color:var(--ink)}
+.lchoice{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding-block:8px 40px}
+.lcard{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:3px solid var(--line);border-radius:22px;padding:14px;display:grid;gap:10px;box-shadow:var(--shadow)}
+.lcard:focus-visible{outline:3px solid var(--kid);outline-offset:3px}
+@media (hover:hover) and (pointer:fine){ .lcard:hover{border-color:var(--kid)} }
+.lthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.lthumbs .pic{aspect-ratio:1/1;border-radius:10px}
+.lthumbs .pic img{padding:2px}
+.lname{font:800 22px/1.15 var(--f-display)}
+.lcount{font-weight:800;color:var(--kid)}
 .done-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 18px}
 .done-actions .note{margin:0}
 .btn.big{font-size:16px;padding:11px 16px;border-radius:14px}
@@ -472,7 +481,10 @@ const CATALOG = __CATALOG__; // numer → [nazwa, seria, wiek, rok]
 document.body.dataset.kid = "jas";
 document.documentElement.lang = "pl";
 const SETS = Object.fromEntries(DATA.sets.map(s => [s.n, s]));
-const BASE = { jas: DATA.jas, antek: DATA.antek };
+// Listy zestawów. Każda rozgrywka pamięta swoją listę (pole list). Zapis bez pola list = gra sprzed wyboru list → lista gazetkowa dziecka.
+const LISTS = DATA.lists;
+const LEGACY_LIST = { jas:"gazetka-jas", antek:"gazetka-antek" };
+const KID_LISTS = { jas:["gazetka-jas","rok-2026"], antek:["gazetka-antek","rok-2026"] };
 const KIDNAME = { jas: "Jaś", antek: "Antek" };
 const KIDGEN = { jas: "Jasia", antek: "Antka" };
 const STAGES = ["Przegląd", "Pojedynki", "Wielki finał", "Lista marzeń"];
@@ -482,21 +494,21 @@ const KEY = "lego-wybor-v2";
 function newRunId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 // rules: 1 = zasady pierwotne (gry rozpoczęte przed zmianą, np. bieżąca gra Antka), 2 = „Oba super / Żaden” + druga szansa wg Elo
 const RULES_NOW = 2;
-function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[], runId:newRunId(), rules:RULES_NOW }; }
+function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[], runId:newRunId(), rules:RULES_NOW, list:null }; }
 function defaults(){ return { settings:{ fmin:3, fmax:5, livesS:3, livesM:2 }, kids:{ jas:blankKid(), antek:blankKid() }, history:{ jas:[], antek:[] } }; }
 // Historia zakończonych rozgrywek: zapis danych (nie obrazka) – obraz PNG generujemy z nich na żądanie.
 function cleanRuns(arr){
   if (!Array.isArray(arr)) return [];
   const item = x => x && okNum(x.n) ? { n:x.n, name: typeof x.name==="string" ? x.name.slice(0,120) : "", theme: typeof x.theme==="string" ? x.theme.slice(0,40) : "" } : null;
   return arr.filter(r => r && typeof r.id==="string" && typeof r.date==="string" && Array.isArray(r.top)).slice(-60).map(r => ({
-    id: r.id.slice(0,40), date: r.date.slice(0,40),
+    id: r.id.slice(0,40), date: r.date.slice(0,40), list: typeof r.list==="string" && LISTS[r.list] ? r.list : "",
     top: r.top.map(item).filter(Boolean).slice(0,12), near: Array.isArray(r.near) ? r.near.map(item).filter(Boolean).slice(0,5) : [],
     stats: r.stats && typeof r.stats==="object" ? { S:r.stats.S|0, M:r.stats.M|0, N:r.stats.N|0, duels:r.stats.duels|0, final:r.stats.final|0, left:r.stats.left|0, n:r.stats.n|0 } : {},
     elo: Array.isArray(r.elo) ? r.elo.map(x => { const it = item(x); return it ? Object.assign(it, { elo: Math.round(+x.elo) || 0, games: x.games|0 }) : null; }).filter(Boolean).slice(0,10) : null
   }));
 }
 const okNum = n => typeof n === "string" && /^\d{3,7}$/.test(n);
-function cleanKid(src){
+function cleanKid(src, k){
   const b = blankKid(); if (!src || typeof src !== "object") return b;
   b.stage = Math.min(3, Math.max(0, src.stage|0));
   if (src.review && typeof src.review === "object") for (const [n,v] of Object.entries(src.review)) if (okNum(n) && "SMN".includes(v) && v.length===1) b.review[n] = v;
@@ -506,6 +518,7 @@ function cleanKid(src){
   b.runId = typeof src.runId==="string" && src.runId ? src.runId.slice(0,40) : "r0";
   // zapis bez pola rules pochodzi sprzed zmiany zasad → gra dokańcza się po staremu
   b.rules = src.rules===2 ? 2 : (Object.keys(src).length ? 1 : RULES_NOW);
+  b.list = typeof src.list==="string" && LISTS[src.list] ? src.list : (src.list===null || !Object.keys(src).length || !k ? null : LEGACY_LIST[k]);
   b.extra = Array.isArray(src.extra) ? src.extra.filter(e => e && okNum(e.n)).map(e => ({ n:e.n, name: typeof e.name==="string" ? e.name.slice(0,80) : "" })) : [];
   return b;
 }
@@ -516,7 +529,7 @@ function cleanSettings(s){
   return { fmin:s.fmin, fmax:s.fmax, livesS:s.livesS, livesM:s.livesM };
 }
 let state = defaults();
-try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas), antek:cleanKid(o.kids&&o.kids.antek) }, history:{ jas:cleanRuns(o.history&&o.history.jas), antek:cleanRuns(o.history&&o.history.antek) } }; } } catch(e){}
+try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas,"jas"), antek:cleanKid(o.kids&&o.kids.antek,"antek") }, history:{ jas:cleanRuns(o.history&&o.history.jas), antek:cleanRuns(o.history&&o.history.antek) } }; } } catch(e){}
 
 /* ================= zapis =================
    Od razu w przeglądarce (szybko), a w tle na wspólnym serwerze – osobny dokument dla każdego dziecka.
@@ -604,7 +617,7 @@ function onRemote(key, d, meta, firstRef){
   }
   firstRef.first = false;
   const before = JSON.stringify(localFor(key));
-  if (key==="settings") state.settings = cleanSettings(d.settings); else if (h) state.history[h] = cleanRuns(d.runs); else state.kids[key] = cleanKid(d.kid);
+  if (key==="settings") state.settings = cleanSettings(d.settings); else if (h) state.history[h] = cleanRuns(d.runs); else state.kids[key] = cleanKid(d.kid, key);
   cache();
   if (before !== JSON.stringify(localFor(key)) && !busy){
     // Jaś i Antek mogą grać jednocześnie na dwóch urządzeniach: zmiana u jednego nie odświeża ekranu gry drugiego
@@ -653,7 +666,7 @@ async function connectDb(){
 }
 
 /* ================= dane zestawów ================= */
-function listOf(k){ const b = BASE[k]; const ex = state.kids[k].extra.map(e => e.n).filter(n => !b.includes(n)); return ex.length ? b.concat(ex) : b; }
+function listOf(k){ const L = LISTS[state.kids[k].list]; const b = L ? L.sets : []; const ex = state.kids[k].extra.map(e => e.n).filter(n => !b.includes(n)); return ex.length ? b.concat(ex) : b; }
 function getSet(n){
   if (SETS[n]) return SETS[n];
   const c = CATALOG[n]; let own = "";
@@ -669,7 +682,7 @@ function metaLine(s){
 }
 function picHTML(s, withNum=true){
   const src = IMG[s.n];
-  return `<div class="pic">${src?`<img alt="" decoding="async" src="${src}">`:`<span class="ph"><span>${s.n}<small>brak zdjęcia</small></span></span>`}${withNum?`<span class="num">${s.n}</span>`:""}${s.unknown?'<span class="flag">numer do sprawdzenia</span>':s.added?'<span class="flag added">dodany</span>':""}</div>`;
+  return `<div class="pic">${src?`<img alt="" decoding="async" loading="lazy" src="${src}">`:`<span class="ph"><span>${s.n}<small>brak zdjęcia</small></span></span>`}${withNum?`<span class="num">${s.n}</span>`:""}${s.unknown?'<span class="flag">numer do sprawdzenia</span>':s.added?'<span class="flag added">dodany</span>':""}</div>`;
 }
 function plz(n){ const a=n%10,b=n%100; return n===1?"zestaw":(a>=2&&a<=4&&!(b>=12&&b<=14))?"zestawy":"zestawów"; }
 const ICON_HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.1 4.6 2.6.2.3.6.3.8 0 1-1.5 2.5-2.6 4.6-2.6 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>';
@@ -780,6 +793,7 @@ function maxStage(E){ if (E.entrants.length < S().fmin) return 0; if (!E.phaseDo
 function kidSummary(k){
   const prev = kid; kid = k; const ks = K(); const E = engine(k); let t;
   const st = Math.min(ks.stage, maxStage(E));
+  if (!ks.list){ kid = prev; return "Wybierz listę zestawów"; }
   if (st===0){ const c = reviewCounts(); t = c.U===c.total ? c.total + " " + plz(c.total) + " do obejrzenia" : `Przegląd: obejrzane ${c.total-c.U} z ${c.total}`; }
   else if (st===1) t = `Pojedynki: w grze ${E.alive.length}`;
   else if (st===2) t = `Wielki finał: ${E.fplayed} z ${E.ftotal}`;
@@ -856,7 +870,7 @@ function snapshotRun(k){
   const E = engine(k), ks = K(), order = listOrder(E), c = reviewCounts(), side = sideStats(k);
   const near = E.out.slice().sort((x,y) => E.wins[y]-E.wins[x] || E.losses[x]-E.losses[y]).slice(0,3);
   const item = n => { const s = getSet(n); return { n, name: s.name || "", theme: s.theme || "" }; };
-  const run = { id: ks.runId, date: new Date().toISOString(), top: order.map(item), near: near.map(item),
+  const run = { id: ks.runId, list: ks.list || "", date: new Date().toISOString(), top: order.map(item), near: near.map(item),
     stats: { S:c.S, M:c.M, N:c.N, duels:E.duelCount, final:E.fplayed, left:side.left, n:side.n }, elo: eloTop10(k) };
   kid = prev;
   const h = state.history[k]; const i = h.findIndex(r => r.id===run.id);
@@ -873,6 +887,7 @@ function eloTop10(k){
 function runElo(k, r){ return r.elo && r.elo.length ? r.elo : (r.id===state.kids[k].runId && state.kids[k].log.length ? eloTop10(k) : null); }
 function newGame(k){
   const old = state.kids[k];
+  if (old.done){ const h = state.history[k].find(r => r.id===old.runId); if (!h || !h.elo || !h.elo.length) snapshotRun(k); }   // starszy wpis dostaje ranking Elo, zanim gra zniknie
   state.kids[k] = Object.assign(blankKid(), { extra: old.extra });   // zestawy dodane po numerze zostają na liście
   save(k); openKid(k);
 }
@@ -888,7 +903,7 @@ function renderHist(){
     const runs = state.history[k].slice().reverse();
     return `<section class="hkid"><h3>${KIDNAME[k]}</h3>${runs.length ? runs.map(r => `
       <article class="hrun" style="--c:${KIDCOLOR[k]}">
-        <div class="when">Lista marzeń ${KIDGEN[k]} · ${esc(fmtDate(r.date))}</div>
+        <div class="when">Lista marzeń ${KIDGEN[k]} · ${esc(fmtDate(r.date))} · ${esc(LISTS[r.list || LEGACY_LIST[k]].name)}</div>
         <ol>${r.top.map((x,i) => `<li><span class="p">${i+1}</span>${picHTML(SETS[x.n] || { n:x.n, name:x.name }, false)}<div style="min-width:0"><div class="nm">${esc(x.name || "Zestaw " + x.n)}</div><div class="sub">Nr ${x.n}${x.theme ? " · " + esc(x.theme) : ""}</div></div></li>`).join("")}</ol>
         ${(() => { const el = runElo(k, r); return el ? `<details class="elo10"><summary>Ranking Elo – top 10</summary><ol>${el.map((x,i) =>
           `<li><span class="p">${i+1}</span>${picHTML(SETS[x.n] || { n:x.n, name:x.name }, false)}<div style="min-width:0"><div class="nm">${esc(x.name || "Zestaw " + x.n)}</div><div class="sub">Nr ${x.n} · Elo <b>${x.elo}</b> · ${x.games} pojedynków</div></div></li>`).join("")}</ol></details>` : ""; })()}
@@ -971,7 +986,20 @@ function openKid(k){
   document.getElementById("pick").hidden = true; document.getElementById("app").hidden = false;
   render(); window.scrollTo(0,0);
 }
+function renderListChoice(){
+  document.getElementById("steps").innerHTML = "";
+  document.getElementById("dock").hidden = true;
+  document.body.classList.remove("compact");
+  document.getElementById("main").innerHTML = `<div class="goal"><h2>Którą listę zestawów wybierasz?</h2><p>Na tej liście będziesz oglądać, a potem robić pojedynki. Listę wybiera się na początku każdej nowej gry.</p></div>
+    <div class="lchoice">${KID_LISTS[kid].map(id => { const L = LISTS[id];
+      const sample = L.sets.filter(n => IMG[n]).slice(0, 40).filter((n,i) => i % 8 === 0).slice(0,4);
+      return `<button class="lcard" data-list="${id}"><div class="lthumbs">${sample.map(n => picHTML(getSet(n), false)).join("")}</div>
+        <div class="lname">${esc(L.name)}</div><div class="lcount">${L.sets.length} ${plz(L.sets.length)}</div></button>`; }).join("")}</div>`;
+}
+function chooseList(id){ if (!KID_LISTS[kid].includes(id)) return; K().list = id; save(); view = "solo"; render(); window.scrollTo(0,0); }
 function render(){
+  if (!K().list) return renderListChoice();
+  document.getElementById("dock").hidden = false;
   const E = engine(kid); const ks = K();
   const ms = maxStage(E); if (ks.stage > ms) ks.stage = ms;
   document.getElementById("steps").innerHTML = STAGES.map((nm,i) =>
@@ -1297,6 +1325,7 @@ document.addEventListener("click", e => {
   if (t.dataset.win) return playDuel(t.dataset.win);
   if (t.dataset.png) return runPNG(t.dataset.png);
   if (t.dataset.delrun) return delRun(t.dataset.delrun, t);
+  if (t.dataset.list) return chooseList(t.dataset.list);
   if (t.dataset.afilter){ allFilter = t.dataset.afilter; return renderAll(); }
   if (t.dataset.view){ view = t.dataset.view; filter = "all"; back = -1; return render(); }
   if (t.dataset.filter){ filter = t.dataset.filter; return render(); }

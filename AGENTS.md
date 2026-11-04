@@ -8,13 +8,18 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 ## Pliki
 
 - `page/template.html` – źródło strony (HTML, CSS, JS). Tu wprowadzaj zmiany.
-- `page/data.json` – listy chłopców i dane zestawów (nazwy PL, seria, wiek, liczba elementów).
+- `page/data.json` – dane zestawów (nazwy PL, seria, wiek, liczba elementów) i listy `lists`: `gazetka-jas`, `gazetka-antek`
+  (gazetka lipiec–grudzień 2026) oraz `rok-2026` – wszystkie zestawy z 2026 bez Duplo (471; źródło: Rebrickable CSV + Brickset;
+  bez gadżetów, książek, minifigurek kolekcjonerskich, promocyjnych, edukacyjnych, BrickLink Designer Program, saszetek 30xxx,
+  pakietów 66xxx i 6-cyfrowych dodatków). Nazwy bez potwierdzenia mają `nameCheck`.
 - `page/catalog.json` – katalog ~2200 zestawów 2022–2026 do opcji „Dodaj zestaw po numerze”.
 - `page/img/<numer>.jpg` – zdjęcia pudełek (z BrickLink, `img.bricklink.com/ItemImage/ON/0/<numer>-1.png`, zmniejszone do 520 px), osadzane w stronie – rodzic chce jedno zdjęcie, z pudełkiem.
 - `page/img-zestaw/<numer>.jpg` – zdjęcia samych zestawów (z Brickset); używane tylko, gdy brak zdjęcia pudełka.
 - `build.py` – składa `public/index.html` (Cloudflare) i `build/artifact.html` (claude.ai). Uruchom po każdej zmianie w `page/`.
 - `public/index.html` – gotowa strona (generowana, ale commitowana, bo Workers Builds nie ma kroku build).
-- `public/_headers` – nagłówki (noindex, no-cache).
+- `public/img/<numer>.jpg` – zdjęcia kopiowane przez `build.py` (strona www ładuje je leniwie; plik strony < 25 MB).
+  Wersja claude.ai ma zdjęcia osadzone tylko dla list z gazetki (limit 16 MB); zestawy z `rok-2026` są tam bez zdjęć.
+- `public/_headers` – nagłówki (noindex; strona no-cache, zdjęcia cache 30 dni).
 - `src/worker.js` – Worker: serwuje `public/` i API `/api/state/{jas|antek|settings|hist-jas|hist-antek}` (GET/PUT).
 - `wrangler.jsonc` – konfiguracja Cloudflare; Durable Object `FamilyStore` (SQLite, darmowy plan).
 
@@ -29,6 +34,12 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 - Jaś i Antek mogą grać jednocześnie na dwóch urządzeniach: każde urządzenie zapisuje tylko dokument grającego dziecka,
   a zmiana u jednego dziecka nie odświeża ekranu gry drugiego. To samo dziecko na dwóch urządzeniach naraz = wygrywa późniejszy zapis.
 - Na claude.ai strona używa bazy artefaktu (`window.claude.use("db")`), bez kodu.
+
+## Listy
+
+- Każda rozgrywka pamięta listę (`list` w stanie dziecka). Zapis bez pola `list` = gra sprzed wyboru list → `gazetka-<dziecko>`.
+- Nowa gra („Zagraj od nowa” albo wyczyszczenie w panelu) zaczyna się ekranem wyboru listy: Jaś – `gazetka-jas` / `rok-2026`,
+  Antek – `gazetka-antek` / `rok-2026`. Przed resetem zakończona gra zapisuje do historii ranking Elo, jeśli go nie miała.
 
 ## Zasady selekcji (ustalone z rodzicem)
 
