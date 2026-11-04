@@ -63,7 +63,7 @@ Wersje zasad (`rules` w stanie dziecka, zapisywane z rozgrywką – zmiana zasad
   druga szansa dla maks. 2 najwyżej ocenianych w Elo odpadniętych zestawów, o ile mają Elo wyższe od najsłabszego finalisty
   (Elo liczone tylko z pojedynków przed finałem). Przed zmianą silnika porównaj wynik `engine()` dla prawdziwych zapisów przed i po zmianie.
 
-Zakładka „Wszystkie zestawy” (dla rodzica): wszystkie zestawy z oznaczeniem listy (Jaś/Antek), bieżącą oceną, linkiem
+Zakładka „Wszystkie zestawy” (dla rodzica): zestawy ze wszystkich list (filtr „Lista”), z oznaczeniem, czy są w obecnej grze Jasia/Antka, bieżącą oceną, linkiem
 `https://promoklocki.pl/<numer>` i rankingiem Elo liczonym z dziennika pojedynków (start 1500, K = 32, remis w finale = 0,5).
 Elo jest wyłącznie informacyjne – nie wpływa na dobór par ani wynik.
 

@@ -387,6 +387,7 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
     </div>
     <div class="row">
       <input class="all-search" id="all-q" type="search" placeholder="Szukaj: numer albo nazwa" autocomplete="off" aria-label="Szukaj zestawu">
+      <select class="all-sort" id="all-list" aria-label="Lista"></select>
       <select class="all-sort" id="all-sort" aria-label="Sortuj">
         <option value="num">Sortuj: numer</option><option value="price">Sortuj: cena (teraz od)</option><option value="eloJas">Sortuj: Elo Jasia</option><option value="eloAntek">Sortuj: Elo Antka</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
       </select>
@@ -824,9 +825,11 @@ function kidSummary(k){
 /* ---------- wszystkie zestawy (widok rodzica) ---------- */
 let screen = "pick", allFilter = "all";
 const STLABEL = { S:"❤", M:"?", N:"✕", U:"·" };
-function allSets(){
-  const out = [];
-  for (const k of ["jas","antek"]) for (const n of listOf(k)) if (!out.includes(n)) out.push(n);
+// Wszystkie zestawy ze wszystkich list (nie tylko z list, na których chłopcy teraz grają) + zestawy dodane po numerze
+function allSets(listId){
+  const out = [], seen = new Set(), add = n => { if (!seen.has(n)){ seen.add(n); out.push(n); } };
+  if (listId && LISTS[listId]) LISTS[listId].sets.forEach(add);
+  else { for (const id in LISTS) LISTS[id].sets.forEach(add); for (const k of ["jas","antek"]) listOf(k).forEach(add); }
   return out;
 }
 /* Elo – tylko informacja dla rodzica, nie wpływa na grę.
@@ -855,18 +858,21 @@ function showAll(){
 }
 function renderAll(){
   const pd = document.getElementById("price-date"); if (pd) pd.textContent = PRICE_DATE ? new Date(PRICE_DATE).toLocaleDateString("pl-PL", { day:"numeric", month:"long", year:"numeric" }) : "–";
-  const all = allSets();
+  const lsel = document.getElementById("all-list");
+  if (!lsel.options.length) lsel.innerHTML = `<option value="">Lista: wszystkie listy</option>` + Object.entries(LISTS).map(([id,L]) => `<option value="${id}">Lista: ${esc(L.name)} (${L.sets.length})</option>`).join("");
+  const all = allSets(lsel.value);
   const elo = { jas: eloFor("jas"), antek: eloFor("antek") };
-  const on = n => ({ j: listOf("jas").includes(n), a: listOf("antek").includes(n) });
-  const cnt = { all: all.length, both: 0, jas: 0, antek: 0 };
-  all.forEach(n => { const o = on(n); if (o.j && o.a) cnt.both++; else if (o.j) cnt.jas++; else cnt.antek++; });
+  const sj = new Set(listOf("jas")), sa = new Set(listOf("antek"));
+  const on = n => ({ j: sj.has(n), a: sa.has(n) });
+  const cnt = { all: all.length, both: 0, jas: 0, antek: 0, none: 0 };
+  all.forEach(n => { const o = on(n); if (o.j && o.a) cnt.both++; else if (o.j) cnt.jas++; else if (o.a) cnt.antek++; else cnt.none++; });
   document.getElementById("all-title").textContent = `Wszystkie zestawy (${all.length})`;
-  document.getElementById("all-filters").innerHTML = [["all","Wszystkie",cnt.all],["both","Jaś i Antek",cnt.both],["jas","Tylko Jaś",cnt.jas],["antek","Tylko Antek",cnt.antek]]
+  document.getElementById("all-filters").innerHTML = [["all","Wszystkie",cnt.all],["both","W grze Jasia i Antka",cnt.both],["jas","Tylko w grze Jasia",cnt.jas],["antek","Tylko w grze Antka",cnt.antek],["none","Poza obecnymi grami",cnt.none]]
     .map(([k,l,c]) => `<button class="chip" data-afilter="${k}" aria-pressed="${allFilter===k}">${l}<span class="c">${c}</span></button>`).join("");
   const q = document.getElementById("all-q").value.trim().toLowerCase();
   const sort = document.getElementById("all-sort").value;
   let list = all.filter(n => { const o = on(n);
-    return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j); });
+    return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j) || (allFilter==="none" && !o.j && !o.a); });
   if (q) list = list.filter(n => n.includes(q) || (getSet(n).name||"").toLowerCase().includes(q) || (getSet(n).theme||"").toLowerCase().includes(q));
   const eloKey = k => n => { const v = elo[k].rating[n]; return v==null ? "1|" + n.padStart(7,"0") : "0|" + String(Math.round(9999 - v)).padStart(5,"0"); };
   const priceKey = n => { const p = getSet(n).lk || {}; const v = p.now ?? p.rrp; return v==null ? "9" : "0" + String(Math.round(v*100)).padStart(9,"0"); };
@@ -886,6 +892,7 @@ function renderAll(){
 }
 document.getElementById("all-q").addEventListener("input", renderAll);
 document.getElementById("all-sort").addEventListener("change", renderAll);
+document.getElementById("all-list").addEventListener("change", renderAll);
 
 /* ---------- historia wyników ---------- */
 const KIDCOLOR = { jas:"#1d6bd0", antek:"#e46a0a" };
