@@ -523,6 +523,7 @@ function cleanKid(src, k){
   if (Array.isArray(src.log)) b.log = src.log.filter(e => e && "drvf".includes(e.t) && e.t.length===1 && okNum(e.a) && (e.t==="v" || okNum(e.b)) && (e.w==null || e.w===e.a || e.w===e.b)).map(e => e.t==="v" ? {t:"v",a:e.a} : e.t==="r" ? Object.assign({t:"r",a:e.a,b:e.b,w:e.w??null,c:(e.c===e.a||e.c===e.b)?e.c:e.a}, e.x==="none" && e.w==null ? {x:"none"} : {}) : Object.assign({t:e.t,a:e.a,b:e.b,w:e.w??null}, e.t==="d" && e.x==="none" && e.w==null ? {x:"none"} : {}));
   b.rank = Array.isArray(src.rank) ? src.rank.filter(okNum) : [];
   b.done = !!src.done;
+  b.passed = !!src.passed || (src.stage|0) > 0 || (Array.isArray(src.log) && src.log.length > 0);   // dziecko już przeszło z przeglądu dalej
   b.runId = typeof src.runId==="string" && src.runId ? src.runId.slice(0,40) : "r0";
   // zapis bez pola rules pochodzi sprzed zmiany zasad → gra dokańcza się po staremu
   b.rules = src.rules===2 ? 2 : (Object.keys(src).length ? 1 : RULES_NOW);
@@ -1044,8 +1045,9 @@ function render(){
   document.getElementById("dock").hidden = false;
   const E = engine(kid); const ks = K();
   const ms = maxStage(E); if (ks.stage > ms) ks.stage = ms;
+  const locked = reviewLocked();
   document.getElementById("steps").innerHTML = STAGES.map((nm,i) =>
-    `<button class="step ${i<ks.stage || (i===3 && ks.done) ? "done":""}" data-step="${i}" ${i<=ms?"":"disabled"} ${i===ks.stage?'aria-current="step"':""}><small>Etap ${i+1}</small><b>${nm}</b></button>`).join("");
+    `<button class="step ${i<ks.stage || (i===3 && ks.done) ? "done":""}" data-step="${i}" ${i<=ms && !(locked && i>0)?"":"disabled"} ${i===ks.stage?'aria-current="step"':""}><small>Etap ${i+1}</small><b>${nm}</b></button>`).join("");
   document.body.classList.toggle("compact", ks.stage===1 || ks.stage===2 || (ks.stage===0 && view==="solo"));
   [renderReview, renderDuels, renderFinal, renderList][ks.stage](E);
   renderDock(E);
@@ -1322,12 +1324,15 @@ function undo(){
 }
 function advance(){
   const ks = K(); const E = engine(kid); const st = ks.stage;
-  if (st===0){ const c = reviewCounts(); if (c.U && !armed){ armed = true; return renderDock(E); } armed = false; }
+  if (st===0){ const c = reviewCounts(); if (c.U && !armed){ armed = true; return renderDock(E); } armed = false; if (maxStage(E) >= 1) ks.passed = true; }
   if (st===3){ ks.rank = listOrder(E); ks.done = true; editRank = false; save(); snapshotRun(kid); sfx.fanfare(); return render(); }
   if (st+1 > maxStage(E)) return;
   ks.stage = st+1; save(); if (st===1) sfx.fanfare(); render(); window.scrollTo(0,0);
 }
-function goStage(i){ const E = engine(kid); if (i > maxStage(E)) return; K().stage = i; armed = false; editRank = false; save(); render(); window.scrollTo(0,0); }
+// Dopóki przegląd nie jest skończony i gra jeszcze nie ruszyła, etapy dalej są zablokowane –
+// przejść można tylko przyciskiem „Pojedynki →”, który przy nieobejrzanych zestawach prosi o potwierdzenie.
+function reviewLocked(){ const ks = K(); return ks.stage===0 && !ks.passed && !ks.log.length && reviewCounts().U > 0; }
+function goStage(i){ const E = engine(kid); if (i > maxStage(E)) return; if (i > 0 && reviewLocked()) return; K().stage = i; armed = false; editRank = false; save(); render(); window.scrollTo(0,0); }
 function revive(n){ K().log.push({t:"v", a:n}); K().done = false; save(); render(); }
 
 /* ---------- dźwięk (syntezowany w przeglądarce, bez plików) ---------- */
