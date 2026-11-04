@@ -1107,7 +1107,7 @@ function livesHTML(n, E){
 }
 function pickHTML(n, side, E, showLives=true){
   const s = getSet(n);
-  return `<button class="pick" data-win="${n}" data-side="${side}">${picHTML(s)}<div class="body"><h3>${title(s)}</h3><div class="meta">${metaLine(s)}</div>${showLives?livesHTML(n,E):""}</div></button>`;
+  return `<button class="pick" data-win="${n}" data-side="${side}">${picHTML(s)}<div class="body"><h3>${title(s)}</h3><div class="meta">${metaLine(s)}</div></div></button>`;   // bez serduszek: dzieci nie powinny wiedzieć, który zestaw jest „na ostatnim”
 }
 function renderDuels(E){
   const main = document.getElementById("main"); const nx = E.next;
@@ -1116,22 +1116,22 @@ function renderDuels(E){
     const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.c))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
     inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>
       ${E.rules >= 2 ? `<div class="nav"><button class="skip" id="skip">🤝 Oba super</button><button class="skip none" id="none">🙅 Żaden</button></div>
-        <p class="hint">„Oba super” – para wróci później. „Żaden” – oba zestawy tracą serduszko.</p>`
+        <p class="hint">„Oba super” – para wróci później. „Żaden” – żaden z nich nie jest tym, co najbardziej chcesz.</p>`
         : `<button class="skip" id="skip">Nie umiem wybrać – następna para</button>`}`;
   } else {
     inner = `<div class="big-done">Mamy finalistów! 🏆</div><div class="nav">Do wielkiego finału wchodzi ${E.alive.length} ${plz(E.alive.length)}. Tam każdy zagra z każdym.</div>`;
   }
-  main.innerHTML = `<div class="goal"><h2>${nx ? "Który bardziej?" : "Koniec pojedynków"}</h2><p>Dotknij zestawu, który bardziej chcesz. Przegrany traci jedno serduszko, a bez serduszek odpada. Super zaczyna z ${S().livesS}, Może z ${S().livesM}.</p></div>
+  main.innerHTML = `<div class="goal"><h2>${nx ? "Który bardziej?" : "Koniec pojedynków"}</h2><p>Dotknij zestawu, który bardziej chcesz. Nie myśl o wcześniejszych pojedynkach – wybierz po prostu ten, który teraz bardziej ci się podoba.</p></div>
     <div class="duel">${inner}${tableHTML(E)}</div>`;
 }
 function tableHTML(E){
-  const byStrength = (x,y) => E.lives[y]-E.lives[x] || E.wins[y]-E.wins[x] || E.losses[x]-E.losses[y];
-  const alive = E.alive.slice().sort(byStrength);
-  const out = E.out.slice().sort((x,y) => E.wins[y]-E.wins[x] || E.losses[x]-E.losses[y]);
+  const byName = (x,y) => (getSet(x).name||x).localeCompare(getSet(y).name||y, "pl");
+  const alive = E.alive.slice().sort(byName);
+  const out = E.out.slice().sort(byName);
   const row = (n, isOut) => { const s = getSet(n);
     return `<div class="trow ${isOut?"out":""}">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${title(s)}</div>
-      <div class="sub">${isOut ? `odpadł · wygrane: ${E.wins[n]}` : `${"♥".repeat(Math.max(0,E.lives[n]))} · wygrane: ${E.wins[n]}`}${E.played[n]===0?" · jeszcze nie grał":""}</div></div>
-      ${isOut ? `<button class="mini" data-revive="${n}" title="Wpuść ten zestaw z jednym serduszkiem">Jeszcze raz</button>` : "<span></span>"}</div>`; };
+      <div class="sub">${isOut ? "odpadł" : "w grze"}${E.played[n]===0?" · jeszcze nie grał":""}</div></div>
+      ${isOut ? `<button class="mini" data-revive="${n}" title="Wpuść ten zestaw z powrotem do gry">Jeszcze raz</button>` : "<span></span>"}</div>`; };
   return `<details class="table"><summary>Tabela: w grze ${alive.length}${out.length?`, odpadło ${out.length}`:""}</summary><div class="trows">
     <div class="tsec">W grze</div>${alive.map(n=>row(n,false)).join("")}
     ${out.length ? `<div class="tsec">Odpadły</div>${out.map(n=>row(n,true)).join("")}` : ""}</div></details>`;
