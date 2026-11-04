@@ -56,6 +56,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 Wersje zasad (`rules` w stanie dziecka, zapisywane z rozgrywką – zmiana zasad nie może zmienić gry w toku):
 - Wszystkie gry (od 2026-11-04 także `rules: 1`): przyciski „🤝 Oba super” (= dawne „Nie umiem wybrać”, `w:null`) i „🙅 Żaden” (`x:"none"`).
 - `rules: 1` (zapis bez pola `rules` = gra sprzed zmiany): druga szansa dla zestawu, który przegrał tylko z finalistami.
+- Stara gra przechodzi automatycznie na `rules: 2` przy otwarciu (`upgradeRules`), jeśli: nie jest zakończona, etap ≤ 1, brak wpisów `r` i `f`
+  w dzienniku i w grze jest więcej zestawów niż miejsc w finale. Do tego momentu obie wersje liczą grę identycznie.
 - `rules: 2` (każda nowa rozgrywka, od 2026-11-03): „🤝 Oba super” (para wraca później) i „🙅 Żaden” (`x:"none"` w dzienniku, oba tracą serduszko);
   druga szansa dla maks. 2 najwyżej ocenianych w Elo odpadniętych zestawów, o ile mają Elo wyższe od najsłabszego finalisty
   (Elo liczone tylko z pojedynków przed finałem). Przed zmianą silnika porównaj wynik `engine()` dla prawdziwych zapisów przed i po zmianie.

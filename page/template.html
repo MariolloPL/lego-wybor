@@ -978,8 +978,19 @@ function showPick(){
   document.getElementById("st-antek").textContent = kidSummary("antek");
   document.getElementById("pick").hidden = false; document.getElementById("app").hidden = true;
 }
+// Bezpieczne przejście starej gry na nowe zasady: tylko gdy nie doszła jeszcze do drugiej szansy ani finału.
+// Do tego miejsca obie wersje zasad liczą grę identycznie, więc postęp się nie zmienia – różnić się będzie tylko przyszła druga szansa.
+function upgradeRules(k){
+  const ks = state.kids[k];
+  if ((ks.rules||1) >= 2 || ks.done || ks.stage > 1 || !ks.list) return;
+  if (ks.log.some(e => e.t==="r" || e.t==="f")) return;
+  const prev = kid; kid = k; const E = engine(k); kid = prev;
+  if (E.alive.length <= S().fmax) return;   // faza pojedynków już się kończy – nic nie zmieniamy
+  ks.rules = 2; save(k);
+}
 function openKid(k){
   kid = k; screen = "app"; document.body.dataset.kid = k;
+  upgradeRules(k);
   undoStack = []; filter = "all"; theme = ""; cursor = 0; armed = false; editRank = false; run = 0; seen = []; back = -1;
   const c = reviewCounts(); view = c.U>0 ? "solo" : "grid";
   document.getElementById("kid-name").textContent = KIDNAME[k];
