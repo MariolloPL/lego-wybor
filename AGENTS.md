@@ -15,6 +15,7 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 - `page/catalog.json` – katalog ~2200 zestawów 2022–2026 do opcji „Dodaj zestaw po numerze”.
 - `page/img/<numer>.jpg` – zdjęcia pudełek (z BrickLink, `img.bricklink.com/ItemImage/ON/0/<numer>-1.png`, zmniejszone do 520 px), osadzane w stronie – rodzic chce jedno zdjęcie, z pudełkiem.
 - `page/img-zestaw/<numer>.jpg` – zdjęcia samych zestawów (z Brickset); używane tylko, gdy brak zdjęcia pudełka.
+- `tools/update_prices.py` – odświeża ceny i status na lego.pl z Łowcy Klocków (`lk` w data.json, `priceDate`), 1 strona/s.
 - `build.py` – składa `public/index.html` (Cloudflare) i `build/artifact.html` (claude.ai). Uruchom po każdej zmianie w `page/`.
 - `public/index.html` – gotowa strona (generowana, ale commitowana, bo Workers Builds nie ma kroku build).
 - `public/img/<numer>.jpg` – zdjęcia kopiowane przez `build.py` (strona www ładuje je leniwie; plik strony < 25 MB).
@@ -71,6 +72,10 @@ Historia wyników: po „Gotowe ✓” na liście marzeń wynik (kolejność, �
 Wpis zawiera też ranking Elo top 10 z całej rozgrywki (`elo`; starsze wpisy bez Elo – liczone na bieżąco, jeśli to wciąż bieżąca gra dziecka).
 Zakładka „🏆 Historia wyników” pokazuje wpisy, pozwala je usunąć i pobrać jako PNG (rysowany w canvas z danych; na claude.ai
 pobieranie jest zablokowane, więc przycisku nie ma). „🔄 Zagraj od nowa” zeruje rozgrywkę dziecka (zostają zestawy dodane po numerze).
+
+Nazwy zestawów: polskie z Łowcy Klocków (lowcaklockow.pl/products/<numer>), wyjątki: 43272 „Heihei” (lego.com), kalendarze adwentowe
+z nazwą serii, 77093 po polsku. Ceny (katalogowa, „teraz od”, najniższa w historii) i status na lego.pl tylko w widokach rodzica:
+Wszystkie zestawy, gotowa lista marzeń, historia – nigdy w przeglądzie ani pojedynkach. Linki: Łowca Klocków, promoklocki.pl, LEGO.com.
 
 Numery zestawów z list źródłowych są nadrzędne. Podejrzane numery najpierw zweryfikuj (Brickset), nie poprawiaj ich automatycznie – zgłoś rodzicowi.
 

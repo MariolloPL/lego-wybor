@@ -84,7 +84,7 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .tag .st{background:rgb(255 255 255/.25);border-radius:99px;padding:0 5px;font-size:12px}
 .pklink{font-size:13px;font-weight:800;color:var(--ink);text-decoration:none;border:1.5px solid var(--line);border-radius:99px;padding:5px 10px;white-space:nowrap}
 .pklink:hover{border-color:var(--ink)}
-@media (max-width:520px){.arow{grid-template-columns:60px minmax(0,1fr)}.arow .pklink{grid-column:2;justify-self:start}}
+@media (max-width:520px){.arow{grid-template-columns:60px minmax(0,1fr)}.arow .pklink,.arow .pklinks{grid-column:2;justify-self:start;flex-direction:row}}
 #hist{padding-bottom:40px}
 .hlist{display:grid;gap:22px;padding-top:14px}
 .hkid h3{font-size:22px;margin-bottom:8px}
@@ -115,6 +115,13 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .done-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 18px}
 .done-actions .note{margin:0}
 .btn.big{font-size:16px;padding:11px 16px;border-radius:14px}
+.price{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:3px}
+.price b{color:var(--ink);font-variant-numeric:tabular-nums}
+.price .pst{color:var(--warn)}
+.pklinks{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.pklinks a{font-size:13px;font-weight:800;color:var(--ink);text-decoration:none;border:1.5px solid var(--line);border-radius:99px;padding:5px 10px;white-space:nowrap;text-align:center}
+.hrun .links{margin-top:4px}
+.hrun .links a{font-size:12px;padding:2px 8px}
 .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-weight:700;padding:6px}
 
 /* ---------- nagłówek ---------- */
@@ -381,11 +388,11 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
     <div class="row">
       <input class="all-search" id="all-q" type="search" placeholder="Szukaj: numer albo nazwa" autocomplete="off" aria-label="Szukaj zestawu">
       <select class="all-sort" id="all-sort" aria-label="Sortuj">
-        <option value="num">Sortuj: numer</option><option value="eloJas">Sortuj: Elo Jasia</option><option value="eloAntek">Sortuj: Elo Antka</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
+        <option value="num">Sortuj: numer</option><option value="price">Sortuj: cena (teraz od)</option><option value="eloJas">Sortuj: Elo Jasia</option><option value="eloAntek">Sortuj: Elo Antka</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
       </select>
     </div>
   </div></div>
-  <div class="wrap"><p class="elo-note">Elo to ranking z pojedynków: każdy zestaw zaczyna od 1500, wygrana z faworytem daje więcej punktów niż z outsiderem. Tylko dla rodzica – nie zmienia zasad gry.</p><div class="alist" id="alist"></div></div>
+  <div class="wrap"><p class="elo-note">Ceny z Łowcy Klocków z dnia <span id="price-date"></span> – aktualne oferty po kliknięciu „Łowca Klocków”. Elo to ranking z pojedynków: każdy zestaw zaczyna od 1500, wygrana z faworytem daje więcej punktów niż z outsiderem. Tylko dla rodzica – nie zmienia zasad gry.</p><div class="alist" id="alist"></div></div>
 </section>
 
 <section id="app" hidden>
@@ -680,6 +687,20 @@ function metaLine(s){
   const bits = [s.theme]; if (s.age) bits.push("od " + s.age + " lat"); if (s.pcs) bits.push(s.pcs.toLocaleString("pl-PL") + " el.");
   return esc(bits.join(" · "));
 }
+// Ceny z Łowcy Klocków (stan na DATA.priceDate) – pokazywane tylko rodzicowi: Wszystkie zestawy, gotowa lista marzeń, historia.
+const PRICE_DATE = DATA.priceDate || "";
+const zl = v => v==null ? "" : v.toLocaleString("pl-PL", { minimumFractionDigits:2, maximumFractionDigits:2 }) + " zł";
+function priceHTML(s){
+  const p = s && s.lk; if (!p || !p.rrp) return "";
+  const bits = [`katalogowa <b>${zl(p.rrp)}</b>`];
+  if (p.now) bits.push(`teraz od <b>${zl(p.now)}</b>`);
+  if (p.low) bits.push(`najniżej w historii <b>${zl(p.low)}</b>`);
+  const st = p.st && p.st!=="Dostępny" ? ` <span class="pst">· lego.pl: ${esc(p.st.toLowerCase())}</span>` : "";
+  return `<div class="price">${bits.join(" · ")}${st}</div>`;
+}
+function shopLinks(n){
+  return `<a href="https://lowcaklockow.pl/products/${n}" target="_blank" rel="noopener">Łowca Klocków</a><a href="https://promoklocki.pl/${n}" target="_blank" rel="noopener">promoklocki.pl</a>`;
+}
 function picHTML(s, withNum=true){
   const src = IMG[s.n];
   return `<div class="pic">${src?`<img alt="" decoding="async" loading="lazy" src="${src}">`:`<span class="ph"><span>${s.n}<small>brak zdjęcia</small></span></span>`}${withNum?`<span class="num">${s.n}</span>`:""}${s.unknown?'<span class="flag">numer do sprawdzenia</span>':s.added?'<span class="flag added">dodany</span>':""}</div>`;
@@ -833,6 +854,7 @@ function showAll(){
   renderAll(); window.scrollTo(0,0);
 }
 function renderAll(){
+  const pd = document.getElementById("price-date"); if (pd) pd.textContent = PRICE_DATE ? new Date(PRICE_DATE).toLocaleDateString("pl-PL", { day:"numeric", month:"long", year:"numeric" }) : "–";
   const all = allSets();
   const elo = { jas: eloFor("jas"), antek: eloFor("antek") };
   const on = n => ({ j: listOf("jas").includes(n), a: listOf("antek").includes(n) });
@@ -847,7 +869,8 @@ function renderAll(){
     return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j); });
   if (q) list = list.filter(n => n.includes(q) || (getSet(n).name||"").toLowerCase().includes(q) || (getSet(n).theme||"").toLowerCase().includes(q));
   const eloKey = k => n => { const v = elo[k].rating[n]; return v==null ? "1|" + n.padStart(7,"0") : "0|" + String(Math.round(9999 - v)).padStart(5,"0"); };
-  const key = { eloJas: eloKey("jas"), eloAntek: eloKey("antek"), num: n => n.padStart(7,"0"), theme: n => (getSet(n).theme||"") + "|" + n.padStart(7,"0"), name: n => (getSet(n).name||"zz").toLowerCase(), age: n => String(getSet(n).age||99).padStart(2,"0") + "|" + n.padStart(7,"0") }[sort];
+  const priceKey = n => { const p = getSet(n).lk || {}; const v = p.now ?? p.rrp; return v==null ? "9" : "0" + String(Math.round(v*100)).padStart(9,"0"); };
+  const key = { price: priceKey, eloJas: eloKey("jas"), eloAntek: eloKey("antek"), num: n => n.padStart(7,"0"), theme: n => (getSet(n).theme||"") + "|" + n.padStart(7,"0"), name: n => (getSet(n).name||"zz").toLowerCase(), age: n => String(getSet(n).age||99).padStart(2,"0") + "|" + n.padStart(7,"0") }[sort];
   list.sort((a,b) => key(a).localeCompare(key(b), "pl"));
   document.getElementById("alist").innerHTML = list.length ? list.map(n => {
     const s = getSet(n), o = on(n);
@@ -856,8 +879,9 @@ function renderAll(){
     return `<div class="arow">${picHTML(s,false)}<div style="min-width:0">
       <div class="nm"><span class="no">${s.n}</span>${title(s)}</div>
       <div class="sub">${metaLine(s)}${s.year ? " · " + s.year : ""}${s.nameCheck ? ' <span class="chk" title="Nazwa poprawiona ręcznie – sprawdź na pudełku">· nazwa do sprawdzenia</span>' : ""}</div>
+      ${priceHTML(s)}
       <div class="tags">${o.j ? tag("jas","Jaś") : ""}${o.a ? tag("antek","Antek") : ""}</div></div>
-      <a class="pklink" href="https://promoklocki.pl/${s.n}" target="_blank" rel="noopener">promoklocki.pl ↗</a></div>`;
+      <div class="pklinks">${shopLinks(s.n)}</div></div>`;
   }).join("") : `<div class="empty">Nic nie pasuje do wyszukiwania.</div>`;
 }
 document.getElementById("all-q").addEventListener("input", renderAll);
@@ -904,7 +928,7 @@ function renderHist(){
     return `<section class="hkid"><h3>${KIDNAME[k]}</h3>${runs.length ? runs.map(r => `
       <article class="hrun" style="--c:${KIDCOLOR[k]}">
         <div class="when">Lista marzeń ${KIDGEN[k]} · ${esc(fmtDate(r.date))} · ${esc(LISTS[r.list || LEGACY_LIST[k]].name)}</div>
-        <ol>${r.top.map((x,i) => `<li><span class="p">${i+1}</span>${picHTML(SETS[x.n] || { n:x.n, name:x.name }, false)}<div style="min-width:0"><div class="nm">${esc(x.name || "Zestaw " + x.n)}</div><div class="sub">Nr ${x.n}${x.theme ? " · " + esc(x.theme) : ""}</div></div></li>`).join("")}</ol>
+        <ol>${r.top.map((x,i) => `<li><span class="p">${i+1}</span>${picHTML(SETS[x.n] || { n:x.n, name:x.name }, false)}<div style="min-width:0"><div class="nm">${esc(x.name || "Zestaw " + x.n)}</div><div class="sub">Nr ${x.n}${x.theme ? " · " + esc(x.theme) : ""}</div>${priceHTML(SETS[x.n])}<div class="links">${shopLinks(x.n)}</div></div></li>`).join("")}</ol>
         ${(() => { const el = runElo(k, r); return el ? `<details class="elo10"><summary>Ranking Elo – top 10</summary><ol>${el.map((x,i) =>
           `<li><span class="p">${i+1}</span>${picHTML(SETS[x.n] || { n:x.n, name:x.name }, false)}<div style="min-width:0"><div class="nm">${esc(x.name || "Zestaw " + x.n)}</div><div class="sub">Nr ${x.n} · Elo <b>${x.elo}</b> · ${x.games} pojedynków</div></div></li>`).join("")}</ol></details>` : ""; })()}
         ${r.near.length ? `<div class="st">Tuż za finałem: ${r.near.map(x => esc(x.name || x.n)).join(", ")}</div>` : ""}
@@ -1245,7 +1269,8 @@ function renderList(E){
       <button class="btn big" id="new-game">🔄 Zagraj od nowa</button></div>` : ""}
     <ol class="rank">${order.map((n,i) => { const s = getSet(n); return `<li class="ritem"><span class="pos">${i+1}</span>${picHTML(s,false)}
       <div style="min-width:0"><h3>${title(s)}</h3><div class="meta">Nr ${s.n} · ${metaLine(s)}</div>
-      <div class="links"><a href="https://www.lego.com/pl-pl/search?q=${s.n}" target="_blank" rel="noopener">LEGO.com</a><a href="https://brickset.com/sets/${s.n}-1" target="_blank" rel="noopener">Brickset</a></div></div>
+      ${fixed ? priceHTML(s) : ""}
+      <div class="links">${shopLinks(s.n)}<a href="https://www.lego.com/pl-pl/search?q=${s.n}" target="_blank" rel="noopener">LEGO.com</a></div></div>
       ${fixed ? "" : `<div class="mv"><button data-up="${i}" ${i===0?"disabled":""} aria-label="W górę">▲</button><button data-down="${i}" ${i===order.length-1?"disabled":""} aria-label="W dół">▼</button></div>`}</li>`; }).join("")}</ol>
     ${near.length ? `<div class="near"><h3>Tuż za finałem</h3><div class="trows" style="padding:0">${near.map(n => { const s = getSet(n); return `<div class="trow out">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${title(s)}</div><div class="sub">Nr ${s.n} · wygrane: ${E.wins[n]}</div></div><span></span></div>`; }).join("")}</div></div>` : `<div class="near"></div>`}`;
 }
