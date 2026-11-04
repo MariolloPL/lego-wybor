@@ -44,7 +44,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 
 ## Zasady selekcji (ustalone z rodzicem)
 
-1. Przegląd: Super! / Może / Nie.
+1. Przegląd: Super! / Może / Nie. Trzeba obejrzeć WSZYSTKIE zestawy – dopiero wtedy odblokowują się pojedynki (bez pomijania).
+   Gdy Super + Może ≤ miejsc w finale, pojedynki są pomijane z komunikatem i gra idzie od razu do finału.
 2. Pojedynki 1 na 1: Super zaczyna z 3 serduszkami, Może z 2; przegrana = −1 serduszko; rywale dobierani wg wyniku;
    „druga szansa” dla zestawu, który przegrał tylko z finalistami; ręczne „Jeszcze raz” w tabeli.
 3. Wielki finał: każdy z każdym, dwa razy (runda 1 + rewanż ze zamienionymi stronami); remis („Tak samo”) = 0,5.

@@ -811,7 +811,8 @@ let kid = null, view = "solo", filter = "all", theme = "", cursor = 0, undoStack
 const K = () => state.kids[kid];
 const S = () => state.settings;
 function reviewCounts(){ const c = {S:0,M:0,N:0,U:0,total:0}; for (const n of listOf(kid)){ c[K().review[n]||"U"]++; c.total++; } return c; }
-function maxStage(E){ if (E.entrants.length < S().fmin) return 0; if (!E.phaseDone) return 1; if (!E.fdone) return 2; return 3; }
+// Etapy po kolei: najpierw trzeba obejrzeć WSZYSTKIE zestawy, potem pojedynki do końca, potem finał.
+function maxStage(E){ if (E.entrants.length < S().fmin || reviewCounts().U > 0) return 0; if (!E.phaseDone) return 1; if (!E.fdone) return 2; return 3; }
 
 function kidSummary(k){
   const prev = kid; kid = k; const ks = K(); const E = engine(k); let t;
@@ -1163,7 +1164,7 @@ function renderDuels(E){
         <p class="hint">„Oba super” – para wróci później. „Żaden” – żaden z nich nie jest tym, co najbardziej chcesz.</p>`
         : `<button class="skip" id="skip">Nie umiem wybrać – następna para</button>`}`;
   } else {
-    inner = `<div class="big-done">Mamy finalistów! 🏆</div><div class="nav">Do wielkiego finału wchodzi ${E.alive.length} ${plz(E.alive.length)}. Tam każdy zagra z każdym.</div>`;
+    inner = `<div class="big-done">Mamy finalistów! 🏆</div><div class="nav">${E.duelCount===0 ? `Masz tylko ${E.alive.length} ${plz(E.alive.length)}, więc pojedynki nie były potrzebne. ` : ""}Do wielkiego finału wchodzi ${E.alive.length} ${plz(E.alive.length)}. Tam każdy zagra z każdym.</div>`;
   }
   main.innerHTML = `<div class="goal"><h2>${nx ? "Który bardziej?" : "Koniec pojedynków"}</h2><p>Dotknij zestawu, który bardziej chcesz. Nie myśl o wcześniejszych pojedynkach – wybierz po prostu ten, który teraz bardziej ci się podoba.</p></div>
     <div class="duel">${inner}${tableHTML(E)}</div>`;
@@ -1293,10 +1294,11 @@ function renderDock(E){
     const c = reviewCounts();
     counts.innerHTML = `<span class="s" title="Super">❤ ${c.S}</span><span class="m" title="Może">? ${c.M}</span><span class="n" title="Nie">✕ ${c.N}</span><span class="u" title="Do obejrzenia">· ${c.U}</span>`;
     label = "Pojedynki →";
-    if (c.S + c.M < S().fmin) text = `Wybierz co najmniej ${S().fmin} Super albo Może.`;
-    else { can = true;
-      text = c.U ? `Zostało ${c.U} do obejrzenia.` : `${c.S + c.M} ${plz(c.S+c.M)} idzie do pojedynków.`; good = !c.U;
-      if (armed && c.U) { text = `${c.U} ${plz(c.U)} bez wyboru nie zagra w pojedynkach. Kliknij jeszcze raz, żeby iść dalej.`; good = false; } }
+    if (c.U) text = `Zostało ${c.U} do obejrzenia. Najpierw obejrzyj wszystkie zestawy.`;
+    else if (c.S + c.M < S().fmin) text = `Wybierz co najmniej ${S().fmin} Super albo Może.`;
+    else { can = true; good = true;
+      if (c.S + c.M <= S().fmax){ label = "Wielki finał →"; text = `Masz tylko ${c.S + c.M} ${plz(c.S+c.M)} – pojedynki nie są potrzebne, od razu wielki finał!`; }
+      else text = `Wszystko obejrzane! ${c.S + c.M} ${plz(c.S+c.M)} idzie do pojedynków.`; }
   } else if (st===1){
     counts.innerHTML = `<span class="s">W grze: ${E.alive.length}</span><span class="u">cel: ${S().fmax}</span>${run?`<span class="run" title="Pojedynki bez przerwy">⚡ ${run}</span>`:""}`;
     label = "Wielki finał →";
@@ -1324,14 +1326,15 @@ function undo(){
 }
 function advance(){
   const ks = K(); const E = engine(kid); const st = ks.stage;
-  if (st===0){ const c = reviewCounts(); if (c.U && !armed){ armed = true; return renderDock(E); } armed = false; if (maxStage(E) >= 1) ks.passed = true; }
+  if (st===0){ const c = reviewCounts(); if (c.U) return; ks.passed = true;
+    if (E.phaseDone && E.duelCount===0 && maxStage(E) >= 2){ ks.stage = 2; save(); render(); window.scrollTo(0,0); return; } }
   if (st===3){ ks.rank = listOrder(E); ks.done = true; editRank = false; save(); snapshotRun(kid); sfx.fanfare(); return render(); }
   if (st+1 > maxStage(E)) return;
   ks.stage = st+1; save(); if (st===1) sfx.fanfare(); render(); window.scrollTo(0,0);
 }
 // Dopóki przegląd nie jest skończony i gra jeszcze nie ruszyła, etapy dalej są zablokowane –
 // przejść można tylko przyciskiem „Pojedynki →”, który przy nieobejrzanych zestawach prosi o potwierdzenie.
-function reviewLocked(){ const ks = K(); return ks.stage===0 && !ks.passed && !ks.log.length && reviewCounts().U > 0; }
+function reviewLocked(){ return reviewCounts().U > 0; }
 function goStage(i){ const E = engine(kid); if (i > maxStage(E)) return; if (i > 0 && reviewLocked()) return; K().stage = i; armed = false; editRank = false; save(); render(); window.scrollTo(0,0); }
 function revive(n){ K().log.push({t:"v", a:n}); K().done = false; save(); render(); }
 
