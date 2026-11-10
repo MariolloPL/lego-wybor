@@ -12,6 +12,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
   (gazetka lipiec–grudzień 2026) oraz `rok-2026` – wszystkie zestawy z 2026 bez Duplo (471; źródło: Rebrickable CSV + Brickset;
   bez gadżetów, książek, minifigurek kolekcjonerskich, promocyjnych, edukacyjnych, BrickLink Designer Program, saszetek 30xxx,
   pakietów 66xxx i 6-cyfrowych dodatków). Nazwy bez potwierdzenia mają `nameCheck`.
+  `rok-2026-do-1000` – zestawy z `rok-2026` z ceną katalogową (`lk.rrp`, Łowca Klocków, 2026-11-04) do 1000 zł (452; ta sama kolejność).
+  Lista jest stała – odświeżenie cen jej nie zmienia (gra w toku nie może stracić zestawów).
 - `page/catalog.json` – katalog ~2200 zestawów 2022–2026 do opcji „Dodaj zestaw po numerze”.
 - `page/img/<numer>.jpg` – zdjęcia pudełek (z BrickLink, `img.bricklink.com/ItemImage/ON/0/<numer>-1.png`, zmniejszone do 520 px), osadzane w stronie – rodzic chce jedno zdjęcie, z pudełkiem.
 - `page/img-zestaw/<numer>.jpg` – zdjęcia samych zestawów (z Brickset); używane tylko, gdy brak zdjęcia pudełka.
@@ -39,8 +41,8 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 ## Listy
 
 - Każda rozgrywka pamięta listę (`list` w stanie dziecka). Zapis bez pola `list` = gra sprzed wyboru list → `gazetka-<dziecko>`.
-- Nowa gra („Zagraj od nowa” albo wyczyszczenie w panelu) zaczyna się ekranem wyboru listy: Jaś – `gazetka-jas` / `rok-2026`,
-  Antek – `gazetka-antek` / `rok-2026`. Przed resetem zakończona gra zapisuje do historii ranking Elo, jeśli go nie miała.
+- Nowa gra („Zagraj od nowa” albo wyczyszczenie w panelu) zaczyna się ekranem wyboru listy: Jaś – `gazetka-jas` / `rok-2026` / `rok-2026-do-1000`,
+  Antek – `gazetka-antek` / `rok-2026` / `rok-2026-do-1000`. Przed resetem zakończona gra zapisuje do historii ranking Elo, jeśli go nie miała.
 
 - Zestawy na stałe na KAŻDEJ liście (prośba rodzica): `ALWAYS` w template.html – teraz 40719 (Tradycyjny zestaw szachów).
   Dopisywane na końcu listy, jeśli jej ich brak (`fullList`). Nie dopisuj ich do `data.json` – kolejność list ma znaczenie dla silnika.
