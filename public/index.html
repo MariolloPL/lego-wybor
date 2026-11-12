@@ -291,6 +291,7 @@ details.table summary{cursor:pointer;padding:12px 16px;font:700 18px/1.2 var(--f
 
 /* ---------- okna ---------- */
 dialog{border:0;border-radius:20px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 32px));box-shadow:0 20px 60px rgb(0 0 0/.35)}
+.chg-row{margin-top:18px}
 dialog::backdrop{background:rgb(10 15 25/.5)}
 .dlg{padding:20px;display:grid;gap:16px;max-height:85vh;overflow:auto}
 .dlg h2{font-size:26px}
@@ -442,6 +443,14 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
     </div>
   </div>
 </section>
+
+<dialog id="chg">
+  <div class="dlg">
+    <h2>Zmienić ocenę?</h2>
+    <p id="chg-text"></p>
+    <div class="row chg-row"><button type="button" class="btn solid" id="chg-keep">Zostaw bez zmian</button><div class="spacer"></div><button type="button" class="btn" id="chg-yes">Zmień ocenę</button></div>
+  </div>
+</dialog>
 
 <dialog id="add">
   <form class="dlg" id="add-form">
@@ -1170,10 +1179,21 @@ function soloNav(dir){
   else cursor++;
   render();
 }
-function decide(n, d){
+let chgPending = null;
+const STNAME = { S:"Super!", M:"Może", N:"Nie" };
+function decide(n, d, sure){
   const ks = K(); const prev = ks.review[n];
   // w siatce drugie kliknięcie zdejmuje wybór; w trybie „po kolei” zawsze ustawia (łatwiej poprawić)
   const next = (prev===d && view!=="solo") ? undefined : d;
+  // Zestaw, który już grał w pojedynkach: zmiana oceny zmienia wyniki gry → najpierw pytanie
+  // (przypadkowe stuknięcia, np. telefonem przy uchu, wymazały kiedyś 104 oceny).
+  if (!sure && prev && next!==prev && ks.log.some(e => e.a===n || e.b===n)){
+    chgPending = { n, d };
+    document.getElementById("chg-text").textContent = `„${getSet(n).name || "Zestaw " + n}” grał już w pojedynkach. ` +
+      (next ? `Zmiana z „${STNAME[prev]}” na „${STNAME[next]}”` : `Usunięcie oceny „${STNAME[prev]}”`) + ` zmieni wyniki pojedynków.`;
+    document.getElementById("chg").showModal(); document.getElementById("chg-keep").focus();
+    return;
+  }
   if (next) sfx.pick(next);
   undoStack.push({n, prev});
   if (next===undefined) delete ks.review[n]; else ks.review[n] = next;
@@ -1452,6 +1472,8 @@ document.addEventListener("click", e => {
     case "close-settings": return document.getElementById("settings").close();
     case "open-add": return openAdd();
     case "close-add": return document.getElementById("add").close();
+    case "chg-keep": chgPending = null; return document.getElementById("chg").close();
+    case "chg-yes": { const c = chgPending; chgPending = null; document.getElementById("chg").close(); return c ? decide(c.n, c.d, true) : undefined; }
     case "edit-rank": editRank = true; return render();
   }
 });

@@ -37,6 +37,12 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 - Jaś i Antek mogą grać jednocześnie na dwóch urządzeniach: każde urządzenie zapisuje tylko dokument grającego dziecka,
   a zmiana u jednego dziecka nie odświeża ekranu gry drugiego. To samo dziecko na dwóch urządzeniach naraz = wygrywa późniejszy zapis.
 - Na claude.ai strona używa bazy artefaktu (`window.claude.use("db")`), bez kodu.
+- Kopie zapasowe: przed każdym zapisem Worker kopiuje poprzednią wersję do `bak:<klucz>:<wersja % 500>` (ok. 500 ostatnich wersji).
+  Odczyt (z kodem rodzinnym): `GET /api/state/<klucz>?backups` – lista wersji, `?backup=<wersja>` – ta wersja.
+  Przywracanie: pobrać wersję i zapisać jej `data` przez PUT (tylko na prośbę rodzica).
+- Zmiana oceny w przeglądzie zestawu, który już grał w pojedynkach, wymaga potwierdzenia (okno „Zmienić ocenę?”).
+  Powód: 2026-11-12 przypadkowe stuknięcia (telefon przy uchu) przestawiły 103 odpadnięte zestawy Antka na „Nie” i skasowały ocenę 40891;
+  oceny odtworzono z dziennika pojedynków (3 przegrane albo gra po 2. przegranej = Super, odpadnięcie po 2 = Może).
 
 ## Listy
 

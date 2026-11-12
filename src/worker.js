@@ -3,6 +3,7 @@
 // (Settings → Variables and Secrets). Kodu nie ma w repozytorium.
 import { DurableObject } from "cloudflare:workers";
 
+const BACKUPS = 500; // 500 ostatnich wersji każdego dokumentu (zapis po każdym kliknięciu)
 const KEYS = new Set(["jas", "antek", "settings", "hist-jas", "hist-antek"]);
 const norm = (x) => String(x || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 
@@ -30,6 +31,12 @@ export default {
     if (!sameCode(norm(request.headers.get("x-family-code")), norm(env.FAMILY_CODE))) return json({ error: "auth" }, 401);
     const store = env.STORE.get(env.STORE.idFromName("family"));
 
+    // kopie zapasowe (tylko odczyt): /api/state/<klucz>?backups = lista wersji, ?backup=<wersja> = ta wersja
+    if (request.method === "GET" && url.searchParams.has("backups")) return json(await store.backups(key));
+    if (request.method === "GET" && url.searchParams.has("backup")) {
+      const rec = await store.backup(key, parseInt(url.searchParams.get("backup"), 10) || 0);
+      return rec ? json(rec) : json({ error: "no_backup" }, 404);
+    }
     if (request.method === "GET") {
       const rec = await store.read(key);
       return rec ? json(rec) : json({ error: "empty" }, 404);
@@ -51,8 +58,18 @@ export class FamilyStore extends DurableObject {
   async read(key) {
     return (await this.ctx.storage.get(key)) ?? null;
   }
+  // Kopie zapasowe: przed każdym zapisem poprzednia wersja trafia do jednego z BACKUPS miejsc (rotacja po numerze wersji).
+  async backups(key) {
+    const m = await this.ctx.storage.list({ prefix: `bak:${key}:` });
+    return [...m.values()].map((r) => ({ version: r.version, updatedAt: r.updatedAt })).sort((a, b) => b.version - a.version);
+  }
+  async backup(key, version) {
+    const r = await this.ctx.storage.get(`bak:${key}:${version % BACKUPS}`);
+    return r && r.version === version ? r : null;
+  }
   async write(key, data) {
     const cur = await this.ctx.storage.get(key);
+    if (cur) await this.ctx.storage.put(`bak:${key}:${cur.version % BACKUPS}`, cur);
     const version = (cur?.version || 0) + 1;
     await this.ctx.storage.put(key, { version, data, updatedAt: new Date().toISOString() });
     return version;
