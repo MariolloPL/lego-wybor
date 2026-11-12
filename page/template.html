@@ -71,6 +71,9 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.1;text-wrap:balance;margin:0
 .all-head h2{font-size:clamp(22px,3vw,28px)}
 .all-search{font:inherit;font-weight:700;padding:9px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);flex:1;min-width:0;max-width:340px}
 .all-sort{font:inherit;font-weight:700;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.all-head .row > *{max-width:100%;min-width:0}
+.all-head .chips{flex:1 1 100%}
+.all-head .wrap{grid-template-columns:minmax(0,1fr)}
 .alist{display:grid;gap:6px;padding-top:12px}
 .arow{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border-radius:14px;padding:6px 10px 6px 6px;box-shadow:var(--shadow)}
 .arow .pic{aspect-ratio:4/3;border-radius:10px}
@@ -292,6 +295,12 @@ details.table summary{cursor:pointer;padding:12px 16px;font:700 18px/1.2 var(--f
 /* ---------- okna ---------- */
 dialog{border:0;border-radius:20px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 32px));box-shadow:0 20px 60px rgb(0 0 0/.35)}
 .chg-row{margin-top:18px}
+.own{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:5px 12px;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-weight:800;font-size:13px;line-height:1.2}
+.own:focus-visible{outline:3px solid var(--kid);outline-offset:2px}
+.own.on{border-color:var(--kid);color:var(--kid)}
+.card > .own{align-self:center;justify-self:center;margin:0 auto 10px}
+.ownrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;justify-items:center}
+.ownrow .own{margin-top:0}
 dialog::backdrop{background:rgb(10 15 25/.5)}
 .dlg{padding:20px;display:grid;gap:16px;max-height:85vh;overflow:auto}
 .dlg h2{font-size:26px}
@@ -446,7 +455,7 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
 
 <dialog id="chg">
   <div class="dlg">
-    <h2>Zmienić ocenę?</h2>
+    <h2 id="chg-title">Zmienić ocenę?</h2>
     <p id="chg-text"></p>
     <div class="row chg-row"><button type="button" class="btn solid" id="chg-keep">Zostaw bez zmian</button><div class="spacer"></div><button type="button" class="btn" id="chg-yes">Zmień ocenę</button></div>
   </div>
@@ -566,8 +575,12 @@ function cleanSettings(s){
   const d = defaults().settings; s = Object.assign({}, d, s||{});
   for (const k of Object.keys(d)) s[k] = Math.max(1, Math.min(12, parseInt(s[k],10) || d[k]));
   if (s.fmin > s.fmax) s.fmax = s.fmin;
-  return { fmin:s.fmin, fmax:s.fmax, livesS:s.livesS, livesM:s.livesM };
+  const owned = Array.isArray(s.owned) ? [...new Set(s.owned.filter(n => typeof n==="string" && okNum(n)))] : [];
+  return { fmin:s.fmin, fmax:s.fmax, livesS:s.livesS, livesM:s.livesM, owned };
 }
+// „Mamy już ten zestaw” – wspólne dla całej rodziny (dokument settings). Zestaw znika z gier obu chłopców
+// na każdym etapie, ale jego rozegrane pojedynki zostają w dzienniku (nie zmieniają się wyniki innych zestawów).
+const isOwned = n => !!(state.settings.owned && state.settings.owned.includes(n));
 let state = defaults();
 try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas,"jas"), antek:cleanKid(o.kids&&o.kids.antek,"antek") }, history:{ jas:cleanRuns(o.history&&o.history.jas), antek:cleanRuns(o.history&&o.history.antek) } }; } } catch(e){}
 
@@ -789,8 +802,10 @@ function engine(k){
     const l = e.w===e.a ? e.b : e.a;
     wins[e.w]++; losses[l]++; lostTo[l].push(e.w); lives[l]--;
   }
-  const alive = entrants.filter(n => lives[n] > 0);
-  const out = entrants.filter(n => lives[n] <= 0);
+  // „Mamy już”: zestaw wypada z gry (nie gra dalej, nie dostaje drugiej szansy, nie wchodzi do finału)
+  const owned = entrants.filter(isOwned);
+  const alive = entrants.filter(n => lives[n] > 0 && !isOwned(n));
+  const out = entrants.filter(n => lives[n] <= 0 && !isOwned(n));
   const strength = n => lives[n]*10 + wins[n] - losses[n]*0.5;
   let next = null, phaseDone = false, candidates = [];
   if (entrants.length >= S.fmin){
@@ -816,7 +831,7 @@ function engine(k){
       if (candidates.length && alive.length){
         const c = candidates[0], seed2 = String(duelCount);
         next = hash(c+weakest+seed2)%2 ? {t:"r", a:c, b:weakest, c} : {t:"r", a:weakest, b:c, c};
-      } else phaseDone = alive.length >= S.fmin || (alive.length>0 && alive.length===entrants.length);
+      } else phaseDone = alive.length >= S.fmin || (alive.length>0 && (alive.length===entrants.length || owned.length>0));
     }
   }
   // wielki finał
@@ -841,7 +856,7 @@ function engine(k){
   }
   const h2h = (a,b) => { let s = 0; for (const r of (fres[key2(a,b)] || [])) s += r===a ? -1 : r===b ? 1 : 0; return s; };
   const ranking = finalists.slice().sort((x,y) => fwins[y]-fwins[x] || h2h(x,y) || lives[y]-lives[x] || wins[y]-wins[x] || idx[x]-idx[y]);
-  return { rules, fplayed, ftotal, streak, entrants, alive, out, lives, wins, losses, played, lostTo, chance, next, phaseDone, candidates, finalists, fpairs, fres, fnext, fwins, fdone, ranking, duelCount, key2 };
+  return { owned, rules, fplayed, ftotal, streak, entrants, alive, out, lives, wins, losses, played, lostTo, chance, next, phaseDone, candidates, finalists, fpairs, fres, fnext, fwins, fdone, ranking, duelCount, key2 };
 }
 
 /* ================= UI ================= */
@@ -849,7 +864,7 @@ let seen = [], back = -1; // historia kart w trybie „po kolei”; back >= 0 = 
 let kid = null, view = "solo", filter = "all", theme = "", cursor = 0, undoStack = [], armed = false, busy = false, editRank = false;
 const K = () => state.kids[kid];
 const S = () => state.settings;
-function reviewCounts(){ const c = {S:0,M:0,N:0,U:0,total:0}; for (const n of listOf(kid)){ c[K().review[n]||"U"]++; c.total++; } return c; }
+function reviewCounts(){ const c = {S:0,M:0,N:0,U:0,total:0,O:0}; for (const n of listOf(kid)){ if (isOwned(n)){ c.O++; continue; } c[K().review[n]||"U"]++; c.total++; } return c; }
 // Etapy po kolei: najpierw trzeba obejrzeć WSZYSTKIE zestawy, potem pojedynki do końca, potem finał.
 function maxStage(E){ if (E.entrants.length < S().fmin || reviewCounts().U > 0) return 0; if (!E.phaseDone) return 1; if (!E.fdone) return 2; return 3; }
 
@@ -905,15 +920,15 @@ function renderAll(){
   const elo = { jas: eloFor("jas"), antek: eloFor("antek") };
   const sj = new Set(listOf("jas")), sa = new Set(listOf("antek"));
   const on = n => ({ j: sj.has(n), a: sa.has(n) });
-  const cnt = { all: all.length, both: 0, jas: 0, antek: 0, none: 0 };
+  const cnt = { all: all.length, both: 0, jas: 0, antek: 0, none: 0, owned: all.filter(isOwned).length };
   all.forEach(n => { const o = on(n); if (o.j && o.a) cnt.both++; else if (o.j) cnt.jas++; else if (o.a) cnt.antek++; else cnt.none++; });
   document.getElementById("all-title").textContent = `Wszystkie zestawy (${all.length})`;
-  document.getElementById("all-filters").innerHTML = [["all","Wszystkie",cnt.all],["both","W grze Jasia i Antka",cnt.both],["jas","Tylko w grze Jasia",cnt.jas],["antek","Tylko w grze Antka",cnt.antek],["none","Poza obecnymi grami",cnt.none]]
+  document.getElementById("all-filters").innerHTML = [["all","Wszystkie",cnt.all],["both","W grze Jasia i Antka",cnt.both],["jas","Tylko w grze Jasia",cnt.jas],["antek","Tylko w grze Antka",cnt.antek],["none","Poza obecnymi grami",cnt.none],["owned","🏠 Mamy już",cnt.owned]]
     .map(([k,l,c]) => `<button class="chip" data-afilter="${k}" aria-pressed="${allFilter===k}">${l}<span class="c">${c}</span></button>`).join("");
   const q = document.getElementById("all-q").value.trim().toLowerCase();
   const sort = document.getElementById("all-sort").value;
   let list = all.filter(n => { const o = on(n);
-    return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j) || (allFilter==="none" && !o.j && !o.a); });
+    return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j) || (allFilter==="none" && !o.j && !o.a) || (allFilter==="owned" && isOwned(n)); });
   if (q) list = list.filter(n => n.includes(q) || (getSet(n).name||"").toLowerCase().includes(q) || (getSet(n).theme||"").toLowerCase().includes(q));
   const eloKey = k => n => { const v = elo[k].rating[n]; return v==null ? "1|" + n.padStart(7,"0") : "0|" + String(Math.round(9999 - v)).padStart(5,"0"); };
   const priceKey = n => { const p = getSet(n).lk || {}; const v = p.now ?? p.rrp; return v==null ? "9" : "0" + String(Math.round(v*100)).padStart(9,"0"); };
@@ -927,7 +942,7 @@ function renderAll(){
       <div class="nm"><span class="no">${s.n}</span>${title(s)}</div>
       <div class="sub">${metaLine(s)}${s.year ? " · " + s.year : ""}${s.nameCheck ? ' <span class="chk" title="Nazwa poprawiona ręcznie – sprawdź na pudełku">· nazwa do sprawdzenia</span>' : ""}</div>
       ${priceHTML(s)}
-      <div class="tags">${o.j ? tag("jas","Jaś") : ""}${o.a ? tag("antek","Antek") : ""}</div></div>
+      <div class="tags">${o.j ? tag("jas","Jaś") : ""}${o.a ? tag("antek","Antek") : ""}</div>${ownBtn(n, "Mamy już")}</div>
       <div class="pklinks">${shopLinks(s.n)}</div></div>`;
   }).join("") : `<div class="empty">Nic nie pasuje do wyszukiwania.</div>`;
 }
@@ -1099,7 +1114,7 @@ function renderReview(){
   const c = reviewCounts(); const main = document.getElementById("main");
   const themes = {}; for (const n of listOf(kid)) { const t = getSet(n).theme || "Inne"; themes[t] = (themes[t]||0)+1; }
   if (theme && !themes[theme]) theme = "";
-  const filters = [["all","Wszystkie",c.total],["U","Do obejrzenia",c.U],["S","❤ Super",c.S],["M","? Może",c.M],["N","✕ Nie",c.N]];
+  const filters = [["all","Wszystkie",c.total],["U","Do obejrzenia",c.U],["S","❤ Super",c.S],["M","? Może",c.M],["N","✕ Nie",c.N]].concat(c.O ? [["O","🏠 Mamy już",c.O]] : []);
   main.innerHTML = `
     <div class="goal"><h2>Przegląd</h2><p>Przy każdym zestawie wybierz: <b>Super!</b> – bardzo chcę, <b>Może</b> – fajny, ale nie jestem pewien, <b>Nie</b> – nie chcę. Super i Może idą do pojedynków.</p></div>
     <div class="tools">
@@ -1117,7 +1132,7 @@ function renderReview(){
     <div id="cards"></div>`;
   view==="grid" ? renderGrid() : renderSolo();
 }
-function rstat(n){ return K().review[n] || "U"; }
+function rstat(n){ return isOwned(n) ? "O" : (K().review[n] || "U"); }
 function cardHTML(n, solo=false){
   const s = getSet(n), st = rstat(n);
   return `<article class="card" data-n="${n}" data-st="${st}">${picHTML(s)}
@@ -1126,10 +1141,14 @@ function cardHTML(n, solo=false){
       <button class="act no" data-dec="N" data-n="${n}" aria-pressed="${st==="N"}">${ICON_X}<span class="t">Nie</span></button>
       <button class="act maybe" data-dec="M" data-n="${n}" aria-pressed="${st==="M"}"><span class="q" aria-hidden="true">?</span><span class="t">Może</span></button>
       <button class="act yes" data-dec="S" data-n="${n}" aria-pressed="${st==="S"}">${ICON_HEART}<span class="t">Super!</span></button>
-    </div></article>`;
+    </div>${ownBtn(n)}</article>`;
+}
+function ownBtn(n, label){
+  return isOwned(n) ? `<button class="own on" data-unown="${n}">🏠 Mamy już · cofnij</button>`
+                    : `<button class="own" data-own="${n}">🏠 ${label || "Mamy już ten zestaw"}</button>`;
 }
 function renderGrid(){
-  let list = listOf(kid).filter(n => filter==="all" || rstat(n)===filter);
+  let list = listOf(kid).filter(n => filter==="all" ? !isOwned(n) : rstat(n)===filter);
   if (theme) list = list.filter(n => (getSet(n).theme||"Inne")===theme);
   const box = document.getElementById("cards"); box.className = "grid";
   box.innerHTML = list.length ? list.map(n => cardHTML(n)).join("") : `<div class="empty">${filter==="U" ? "Wszystko obejrzane!" : "Brak zestawów w tym widoku."}</div>`;
@@ -1137,7 +1156,7 @@ function renderGrid(){
 function renderSolo(){
   const box = document.getElementById("cards"); box.className = "solo";
   const q = listOf(kid).filter(n => rstat(n)==="U"); const c = reviewCounts();
-  seen = seen.filter(n => listOf(kid).includes(n));
+  seen = seen.filter(n => listOf(kid).includes(n) && !isOwned(n));
   if (back >= seen.length) back = -1;
   const done = c.total - c.U;
   const bar = `<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/c.total)}%"></i></div>`;
@@ -1168,7 +1187,7 @@ function fitCards(){
       const over = bottom.getBoundingClientRect().bottom + window.scrollY - limit;
       if (over > 0) pics.forEach(p => { const h = p.getBoundingClientRect().height; p.style.aspectRatio = "auto"; p.style.height = Math.max(min, h - over) + "px"; });
     };
-    fit(".solo .card .pic", ".solo .card .acts", 120);
+    fit(".solo .card .pic", ".solo .card", 120);   // cała karta, razem z „Mamy już”
     fit(".pair .pick .pic", ".pair", 110);
   });
 }
@@ -1180,6 +1199,24 @@ function soloNav(dir){
   render();
 }
 let chgPending = null;
+function ask(title, text, yes, fn){
+  chgPending = fn;
+  document.getElementById("chg-title").textContent = title;
+  document.getElementById("chg-text").textContent = text;
+  document.getElementById("chg-yes").textContent = yes;
+  document.getElementById("chg").showModal(); document.getElementById("chg-keep").focus();
+}
+function ownSet(n, on){
+  const nm = `„${getSet(n).name || "Zestaw " + n}”`;
+  const apply = () => {
+    const o = new Set(state.settings.owned || []); on ? o.add(n) : o.delete(n);
+    state.settings = cleanSettings(Object.assign({}, state.settings, { owned: [...o] }));
+    save("settings");
+    if (screen==="all") renderAll(); else if (kid) render();
+  };
+  if (on) ask("Mamy już ten zestaw?", `${nm} zniknie z gry Jasia i Antka – z przeglądu, pojedynków, finału i listy marzeń. Rozegrane pojedynki zostają. Cofnąć można w „Wszystkich zestawach”.`, "Tak, mamy go", apply);
+  else ask("Cofnąć „Mamy już”?", `${nm} wróci do gry Jasia i Antka z dotychczasowymi wynikami.`, "Tak, przywróć", apply);
+}
 const STNAME = { S:"Super!", M:"Może", N:"Nie" };
 function decide(n, d, sure){
   const ks = K(); const prev = ks.review[n];
@@ -1188,11 +1225,9 @@ function decide(n, d, sure){
   // Zestaw, który już grał w pojedynkach: zmiana oceny zmienia wyniki gry → najpierw pytanie
   // (przypadkowe stuknięcia, np. telefonem przy uchu, wymazały kiedyś 104 oceny).
   if (!sure && prev && next!==prev && ks.log.some(e => e.a===n || e.b===n)){
-    chgPending = { n, d };
-    document.getElementById("chg-text").textContent = `„${getSet(n).name || "Zestaw " + n}” grał już w pojedynkach. ` +
-      (next ? `Zmiana z „${STNAME[prev]}” na „${STNAME[next]}”` : `Usunięcie oceny „${STNAME[prev]}”`) + ` zmieni wyniki pojedynków.`;
-    document.getElementById("chg").showModal(); document.getElementById("chg-keep").focus();
-    return;
+    return ask("Zmienić ocenę?", `„${getSet(n).name || "Zestaw " + n}” grał już w pojedynkach. ` +
+      (next ? `Zmiana z „${STNAME[prev]}” na „${STNAME[next]}”` : `Usunięcie oceny „${STNAME[prev]}”`) + ` zmieni wyniki pojedynków.`,
+      "Zmień ocenę", () => decide(n, d, true));
   }
   if (next) sfx.pick(next);
   undoStack.push({n, prev});
@@ -1221,12 +1256,15 @@ function pickHTML(n, side, E, showLives=true){
   const s = getSet(n);
   return `<button class="pick" data-win="${n}" data-side="${side}">${picHTML(s)}<div class="body"><h3>${title(s)}</h3><div class="meta">${metaLine(s)}</div></div></button>`;   // bez serduszek: dzieci nie powinny wiedzieć, który zestaw jest „na ostatnim”
 }
+function ownRow(nx){
+  return `<div class="ownrow">${ownBtn(nx.a, "Ten już mamy")}${ownBtn(nx.b, "Ten już mamy")}</div>`;
+}
 function renderDuels(E){
   const main = document.getElementById("main"); const nx = E.next;
   let inner;
   if (nx){
     const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.c))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
-    inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>
+    inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>${ownRow(nx)}
       ${true ? `<div class="nav"><button class="skip" id="skip">🤝 Oba super</button><button class="skip none" id="none">🙅 Żaden</button></div>
         <p class="hint">„Oba super” – para wróci później. „Żaden” – żaden z nich nie jest tym, co najbardziej chcesz.</p>`
         : `<button class="skip" id="skip">Nie umiem wybrać – następna para</button>`}`;
@@ -1323,7 +1361,7 @@ function renderFinal(E){
     <div class="duel">
       <div class="bar" aria-hidden="true"><i style="width:${Math.round(100*done/Math.max(1,E.ftotal))}%"></i></div>
       <div class="nav">${nx && nx.leg===2 ? "Rewanż · " : "Runda 1 · "}pojedynek ${Math.min(done+1, E.ftotal)} z ${E.ftotal}</div>
-      ${nx ? `<div class="pair">${pickHTML(nx.a,"L",E,false)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E,false)}</div>
+      ${nx ? `<div class="pair">${pickHTML(nx.a,"L",E,false)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E,false)}</div>${ownRow(nx)}
         <button class="skip" id="skip">Tak samo – remis</button>` : `<div class="big-done">🏆</div>`}
       <details class="table" ${nx?"":"open"}><summary>Wyniki finału</summary><div class="trows">${standings}</div></details>
     </div>`;
@@ -1332,8 +1370,9 @@ function renderFinal(E){
 /* ---------- etap 4: lista marzeń ---------- */
 function listOrder(E){
   const fin = E.finalists; const ks = K();
-  const same = ks.rank.length===fin.length && fin.every(n => ks.rank.includes(n));
-  return same ? ks.rank.slice() : E.ranking.slice();
+  const r = ks.rank.filter(n => fin.includes(n));   // „Mamy już” usuwa zestaw z listy, reszta zostaje w ustalonej kolejności
+  const same = r.length===fin.length && fin.every(n => r.includes(n));
+  return same ? r : E.ranking.slice();
 }
 function renderList(E){
   const order = listOrder(E); const ks = K(); const fixed = ks.done && !editRank;
@@ -1347,7 +1386,7 @@ function renderList(E){
     <ol class="rank">${order.map((n,i) => { const s = getSet(n); return `<li class="ritem"><span class="pos">${i+1}</span>${picHTML(s,false)}
       <div style="min-width:0"><h3>${title(s)}</h3><div class="meta">Nr ${s.n} · ${metaLine(s)}</div>
       ${fixed ? priceHTML(s) : ""}
-      <div class="links">${shopLinks(s.n)}<a href="https://www.lego.com/pl-pl/search?q=${s.n}" target="_blank" rel="noopener">LEGO.com</a></div></div>
+      <div class="links">${shopLinks(s.n)}<a href="https://www.lego.com/pl-pl/search?q=${s.n}" target="_blank" rel="noopener">LEGO.com</a></div>${ownBtn(s.n, "Mamy już")}</div>
       ${fixed ? "" : `<div class="mv"><button data-up="${i}" ${i===0?"disabled":""} aria-label="W górę">▲</button><button data-down="${i}" ${i===order.length-1?"disabled":""} aria-label="W dół">▼</button></div>`}</li>`; }).join("")}</ol>
     ${near.length ? `<div class="near"><h3>Tuż za finałem</h3><div class="trows" style="padding:0">${near.map(n => { const s = getSet(n); return `<div class="trow out">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${title(s)}</div><div class="sub">Nr ${s.n} · wygrane: ${E.wins[n]}</div></div><span></span></div>`; }).join("")}</div></div>` : `<div class="near"></div>`}`;
 }
@@ -1444,6 +1483,8 @@ document.addEventListener("click", e => {
   if (t.dataset.png) return runPNG(t.dataset.png);
   if (t.dataset.delrun) return delRun(t.dataset.delrun, t);
   if (t.dataset.list) return chooseList(t.dataset.list);
+  if (t.dataset.own) return ownSet(t.dataset.own, true);
+  if (t.dataset.unown) return ownSet(t.dataset.unown, false);
   if (t.dataset.afilter){ allFilter = t.dataset.afilter; return renderAll(); }
   if (t.dataset.view){ view = t.dataset.view; filter = "all"; back = -1; return render(); }
   if (t.dataset.filter){ filter = t.dataset.filter; return render(); }
@@ -1473,7 +1514,7 @@ document.addEventListener("click", e => {
     case "open-add": return openAdd();
     case "close-add": return document.getElementById("add").close();
     case "chg-keep": chgPending = null; return document.getElementById("chg").close();
-    case "chg-yes": { const c = chgPending; chgPending = null; document.getElementById("chg").close(); return c ? decide(c.n, c.d, true) : undefined; }
+    case "chg-yes": { const c = chgPending; chgPending = null; document.getElementById("chg").close(); return c ? c() : undefined; }
     case "edit-rank": editRank = true; return render();
   }
 });

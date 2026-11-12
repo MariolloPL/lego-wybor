@@ -52,6 +52,10 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 
 - Zestawy na stałe na KAŻDEJ liście (prośba rodzica): `ALWAYS` w template.html – teraz 40719 (Tradycyjny zestaw szachów).
   Dopisywane na końcu listy, jeśli jej ich brak (`fullList`). Nie dopisuj ich do `data.json` – kolejność list ma znaczenie dla silnika.
+- „🏠 Mamy już ten zestaw” (prośba rodzica, 2026-11-12): wspólne dla rodziny – `owned` w dokumencie `settings`. Przycisk na każdym etapie
+  (przegląd, pod parą w pojedynkach i finale, lista marzeń, Wszystkie zestawy), zawsze z oknem potwierdzenia; cofnięcie w „Wszystkich zestawach”
+  (filtr „🏠 Mamy już”). Działa też w trwających grach: silnik nadal przelicza pojedynki z tym zestawem (wyniki innych się nie zmieniają),
+  ale zestaw nie jest w grze, nie dostaje drugiej szansy, nie wchodzi do finału ani na listę marzeń; w przeglądzie nie liczy się do „do obejrzenia”.
 - Kolejność w przeglądzie: jak w liście (rok-2026 rosnąco po numerze, gazetki w kolejności spisanej przez rodzica). Losowania na razie nie ma.
 
 ## Zasady selekcji (ustalone z rodzicem)
