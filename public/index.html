@@ -222,6 +222,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .lives .on{color:var(--heart)} .lives .off{color:var(--line)}
 .pick.win{border-color:var(--heart);transform:scale(1.04)}
 .pick.lose{opacity:.25;transform:scale(.94)}
+.pick.calm{opacity:.6;transition:opacity .3s}
 .vs{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:2;background:var(--stud);color:#1a2332;font:800 22px/1 var(--f-display);width:54px;height:54px;border-radius:50%;display:grid;place-items:center;box-shadow:0 3px 0 rgb(0 0 0/.2);pointer-events:none}
 @media (max-width:520px){.pair{gap:10px}.vs{width:42px;height:42px;font-size:17px;top:30%}.pick .body{padding:8px}.pick .meta{font-size:12px}}
 .skip{border:2px dashed var(--line);background:none;border-radius:14px;padding:10px 16px;font-weight:800;color:var(--muted)}
@@ -498,6 +499,11 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
         <label for="livesM">Serduszka „Może”<input id="livesM" type="number" min="1" max="6" inputmode="numeric"></label>
       </div>
       <p class="note" id="limits-note"></p>
+    </div>
+    <div>
+      <h3>Tabela pojedynków</h3>
+      <p>Tylko dla rodzica – dzieci nie widzą, które zestawy odpadły. „Jeszcze raz” wpuszcza odpadnięty zestaw z powrotem do gry.</p>
+      <div id="ptable"></div>
     </div>
     <div>
       <h3>Lewa czy prawa karta?</h3>
@@ -873,7 +879,7 @@ function kidSummary(k){
   const st = Math.min(ks.stage, maxStage(E));
   if (!ks.list){ kid = prev; return "Wybierz listę zestawów"; }
   if (st===0){ const c = reviewCounts(); t = c.U===c.total ? c.total + " " + plz(c.total) + " do obejrzenia" : `Przegląd: obejrzane ${c.total-c.U} z ${c.total}`; }
-  else if (st===1) t = `Pojedynki: w grze ${E.alive.length}`;
+  else if (st===1) t = `Pojedynki: rozegrane ${E.duelCount}`;
   else if (st===2) t = `Wielki finał: ${E.fplayed} z ${E.ftotal}`;
   else t = ks.done ? `Lista gotowa: ${E.finalists.length} ${plz(E.finalists.length)}` : "Lista marzeń";
   kid = prev; return t;
@@ -1263,7 +1269,7 @@ function renderDuels(E){
   const main = document.getElementById("main"); const nx = E.next;
   let inner;
   if (nx){
-    const banner = nx.t==="r" ? `<div class="banner">Druga szansa! „${title(getSet(nx.c))}” przegrał tylko z finalistami. Jeśli teraz wygra, wraca do gry.</div>` : "";
+    const banner = "";   // bez informacji o drugiej szansie – dzieci nie widzą, że coś odpada
     inner = `${banner}<div class="pair">${pickHTML(nx.a,"L",E)}<div class="vs" aria-hidden="true">VS</div>${pickHTML(nx.b,"R",E)}</div>${ownRow(nx)}
       ${true ? `<div class="nav"><button class="skip" id="skip">🤝 Oba super</button><button class="skip none" id="none">🙅 Żaden</button></div>
         <p class="hint">„Oba super” – para wróci później. „Żaden” – żaden z nich nie jest tym, co najbardziej chcesz.</p>`
@@ -1272,17 +1278,17 @@ function renderDuels(E){
     inner = `<div class="big-done">Mamy finalistów! 🏆</div><div class="nav">${E.duelCount===0 ? `Masz tylko ${E.alive.length} ${plz(E.alive.length)}, więc pojedynki nie były potrzebne. ` : ""}Do wielkiego finału wchodzi ${E.alive.length} ${plz(E.alive.length)}. Tam każdy zagra z każdym.</div>`;
   }
   main.innerHTML = `<div class="goal"><h2>${nx ? "Który bardziej?" : "Koniec pojedynków"}</h2><p>Dotknij zestawu, który bardziej chcesz. Nie myśl o wcześniejszych pojedynkach – wybierz po prostu ten, który teraz bardziej ci się podoba.</p></div>
-    <div class="duel">${inner}${tableHTML(E)}</div>`;
+    <div class="duel">${inner}</div>`;
 }
-function tableHTML(E){
+function tableHTML(E, k){
   const byName = (x,y) => (getSet(x).name||x).localeCompare(getSet(y).name||y, "pl");
   const alive = E.alive.slice().sort(byName);
   const out = E.out.slice().sort(byName);
   const row = (n, isOut) => { const s = getSet(n);
     return `<div class="trow ${isOut?"out":""}">${picHTML(s,false)}<div style="min-width:0"><div class="nm">${title(s)}</div>
       <div class="sub">${isOut ? "odpadł" : "w grze"}${E.played[n]===0?" · jeszcze nie grał":""}</div></div>
-      ${isOut ? `<button class="mini" data-revive="${n}" title="Wpuść ten zestaw z powrotem do gry">Jeszcze raz</button>` : "<span></span>"}</div>`; };
-  return `<details class="table"><summary>Tabela: w grze ${alive.length}${out.length?`, odpadło ${out.length}`:""}</summary><div class="trows">
+      ${isOut ? `<button class="mini" data-revive="${k}|${n}" title="Wpuść ten zestaw z powrotem do gry">Jeszcze raz</button>` : "<span></span>"}</div>`; };
+  return `<details class="table"><summary>${KIDNAME[k]}: w grze ${alive.length}${out.length?`, odpadło ${out.length}`:""}</summary><div class="trows">
     <div class="tsec">W grze</div>${alive.map(n=>row(n,false)).join("")}
     ${out.length ? `<div class="tsec">Odpadły</div>${out.map(n=>row(n,true)).join("")}` : ""}</div></details>`;
 }
@@ -1297,17 +1303,10 @@ function playDuel(winner){
   const loser = winner===nx.a ? nx.b : nx.a;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const wEl = document.querySelector(`.pick[data-win="${winner}"]`), lEl = document.querySelector(`.pick[data-win="${loser}"]`);
-  wEl.classList.add("win"); lEl.classList.add("lose");
-  const comeback = nx.t==="r" && winner===nx.c;
-  stamp(wEl, comeback ? "Wraca do gry!" : "Wygrywa!", "");
-  if (st===1 && !(nx.t==="r" && loser===nx.c)){
-    const hearts = lEl.querySelectorAll(".lives .on"); const h = hearts[hearts.length-1];
-    if (h){ h.classList.add("falling"); }
-    if (E.lives[loser] - 1 <= 0) stamp(lEl, "Odpada!", "bad");
-  }
+  wEl.classList.add("win"); lEl.classList.add("calm");
+  stamp(wEl, "Wygrywa!", "");   // bez „Odpada!” i smutnych dźwięków – dzieci nie mają się bać wybierać
   if (!reduce) burst(wEl);
-  if (comeback) sfx.comeback(); else sfx.win();
-  if (st===1 && !(nx.t==="r" && loser===nx.c)) setTimeout(() => (E.lives[loser]-1 <= 0 ? sfx.out() : sfx.lose()), 380);
+  sfx.win();
   run++;
   setTimeout(() => {
     K().log.push(nx.t==="r" ? { t:"r", a:nx.a, b:nx.b, w:winner, c:nx.c } : { t:nx.t, a:nx.a, b:nx.b, w:winner }); K().done = false; save(); busy = false; render();
@@ -1339,8 +1338,7 @@ function toast(text){ const t = document.createElement("div"); t.className = "to
 function noneDuel(){
   const E = engine(kid); if (K().stage!==1) return; const nx = E.next; if (!nx || busy) return;   // „Żaden” we wszystkich grach (silnik obsługuje x:"none" niezależnie od wersji zasad)
   busy = true;
-  document.querySelectorAll(".pick").forEach(p => p.classList.add("lose"));
-  sfx.lose();
+  document.querySelectorAll(".pick").forEach(p => p.classList.add("calm"));
   setTimeout(() => {
     K().log.push(nx.t==="r" ? { t:"r", a:nx.a, b:nx.b, w:null, c:nx.c, x:"none" } : { t:"d", a:nx.a, b:nx.b, w:null, x:"none" });
     K().done = false; save(); busy = false; render(); run++;
@@ -1406,11 +1404,10 @@ function renderDock(E){
       if (c.S + c.M <= S().fmax){ label = "Wielki finał →"; text = `Masz tylko ${c.S + c.M} ${plz(c.S+c.M)} – pojedynki nie są potrzebne, od razu wielki finał!`; }
       else text = `Wszystko obejrzane! ${c.S + c.M} ${plz(c.S+c.M)} idzie do pojedynków.`; }
   } else if (st===1){
-    counts.innerHTML = `<span class="s">W grze: ${E.alive.length}</span><span class="u">cel: ${S().fmax}</span>${run?`<span class="run" title="Pojedynki bez przerwy">⚡ ${run}</span>`:""}`;
+    counts.innerHTML = `<span class="s">Pojedynek ${E.duelCount+1}</span>${run?`<span class="run" title="Pojedynki bez przerwy">⚡ ${run}</span>`:""}`;
     label = "Wielki finał →";
     if (E.phaseDone){ can = true; good = true; text = "Mamy finalistów!"; }
-    else if (E.next && E.next.t==="r") text = "Druga szansa dla zestawu, który przegrał tylko z finalistami.";
-    else text = `Pojedynek ${E.duelCount+1}. Odpadną jeszcze ${Math.max(0, E.alive.length - S().fmax)}.`;
+    else text = "Wybieraj ten, który bardziej ci się podoba.";
   } else if (st===2){
     const left = E.ftotal - E.fplayed;
     counts.innerHTML = `<span class="s">Finał: ${E.finalists.length}</span>${run?`<span class="run" title="Pojedynki bez przerwy">⚡ ${run}</span>`:""}`;
@@ -1442,7 +1439,13 @@ function advance(){
 // przejść można tylko przyciskiem „Pojedynki →”, który przy nieobejrzanych zestawach prosi o potwierdzenie.
 function reviewLocked(){ return reviewCounts().U > 0; }
 function goStage(i){ const E = engine(kid); if (i > maxStage(E)) return; if (i > 0 && reviewLocked()) return; K().stage = i; armed = false; editRank = false; save(); render(); window.scrollTo(0,0); }
-function revive(n){ K().log.push({t:"v", a:n}); K().done = false; save(); render(); }
+function revive(v){ const [k, n] = v.split("|"); if (!state.kids[k]) return; state.kids[k].log.push({t:"v", a:n}); state.kids[k].done = false; save(k); renderPTable(); if (kid) render(); }
+// Tabela pojedynków tylko w panelu rodzica – dzieci nie widzą, co odpada (2026-11-14)
+function renderPTable(){
+  const box = document.getElementById("ptable"); if (!box) return;
+  const parts = ["jas","antek"].filter(k => state.kids[k].list && state.kids[k].stage >= 1).map(k => tableHTML(engine(k), k));
+  box.innerHTML = parts.length ? parts.join("") : `<p class="note">Tabela pojawi się, gdy dziecko zacznie pojedynki.</p>`;
+}
 
 /* ---------- dźwięk (syntezowany w przeglądarce, bez plików) ---------- */
 let soundOn = true; try { soundOn = localStorage.getItem("lego-sound") !== "off"; } catch(e){}
@@ -1598,7 +1601,7 @@ function renderSideStats(){
   }).join("");
 }
 function openSettings(){
-  renderSideStats();
+  renderSideStats(); renderPTable();
   for (const k of SETTING_KEYS) document.getElementById(k).value = S()[k];
   document.getElementById("limits-note").textContent = ""; document.getElementById("reset-note").textContent = "";
   document.querySelectorAll("[data-reset]").forEach(b => { b.dataset.armed = ""; b.textContent = "Wyczyść wybory " + KIDGEN[b.dataset.reset]; });

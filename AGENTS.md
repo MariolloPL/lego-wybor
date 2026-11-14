@@ -63,13 +63,16 @@ Ta sama strona działa też jako artefakt na claude.ai: https://claude.ai/artifa
 1. Przegląd: Super! / Może / Nie. Trzeba obejrzeć WSZYSTKIE zestawy – dopiero wtedy odblokowują się pojedynki (bez pomijania).
    Gdy Super + Może ≤ miejsc w finale, pojedynki są pomijane z komunikatem i gra idzie od razu do finału.
 2. Pojedynki 1 na 1: Super zaczyna z 3 serduszkami, Może z 2; przegrana = −1 serduszko; rywale dobierani wg wyniku;
-   „druga szansa” dla zestawu, który przegrał tylko z finalistami; ręczne „Jeszcze raz” w tabeli.
+   „druga szansa” dla zestawu, który przegrał tylko z finalistami; ręczne „Jeszcze raz” w tabeli (panel rodzica).
 3. Wielki finał: każdy z każdym, dwa razy (runda 1 + rewanż ze zamienionymi stronami); remis („Tak samo”) = 0,5.
    Bez podpowiedzi przy zestawach: żadnych serii wygranych ani serduszek na kartach i w tabeli (dzieci nie chciały głosować przeciw
    zestawowi z ostatnim serduszkiem). Serduszka działają w silniku, ale dzieci ich nie widzą.
    Strony kart są losowane (powtarzalnie, z numerów zestawów i numeru pojedynku), także w drugiej szansie (pole `c` w dzienniku
    = zestaw walczący o powrót). W dzienniku `a` = lewa karta, `b` = prawa. Panel rodzica pokazuje, jak często wygrywa lewa.
 4. Lista marzeń z możliwością poprawienia kolejności.
+5. Dzieci nie widzą, że coś odpada (prośba rodzica, 2026-11-14 – chłopcy bali się klikać): w pojedynkach bez tabeli, bez „Odpada!”,
+   bez banera drugiej szansy („Wraca do gry!”), bez licznika „w grze / cel / odpadną jeszcze” i bez smutnych dźwięków; przegrana karta
+   tylko lekko blednie. Pasek pokazuje numer pojedynku. Tabela z „Jeszcze raz” jest w panelu rodzica (⚙ → „Tabela pojedynków”).
 
 Wersje zasad (`rules` w stanie dziecka, zapisywane z rozgrywką – zmiana zasad nie może zmienić gry w toku):
 - Wszystkie gry (od 2026-11-04 także `rules: 1`): przyciski „🤝 Oba super” (= dawne „Nie umiem wybrać”, `w:null`) i „🙅 Żaden” (`x:"none"`).
