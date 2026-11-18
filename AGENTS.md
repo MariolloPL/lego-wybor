@@ -86,10 +86,11 @@ Wersje zasad (`rules` w stanie dziecka, zapisywane z rozgrywką – zmiana zasad
 Zakładka „Wszystkie zestawy” (dla rodzica): zestawy ze wszystkich list (filtr „Lista”), z oznaczeniem, czy są w obecnej grze Jasia/Antka, bieżącą oceną, linkiem
 `https://promoklocki.pl/<numer>` i rankingiem Elo liczonym z dziennika pojedynków (start 1500, K = 32, remis w finale = 0,5).
 Elo jest wyłącznie informacyjne – nie wpływa na dobór par ani wynik.
-„🏆 Master Elo” (prośba rodzica, 2026-11-18): jeden ranking ze WSZYSTKICH pojedynków obu chłopców – dokument `archive`
-(`{v:1, games:[{id, kid, list, end, log:[[t,a,b,w,x]]}]}`, wpis dodawany przy „Zagraj od nowa” i „Wyczyść wybory”) + bieżące gry;
+Elo w „Wszystkich zestawach” (prośba rodzica, 2026-11-18): każdy chłopiec ma SWÓJ ranking ze wszystkich swoich gier – dokument `archive`
+(`{v:1, games:[{id, kid, list, end, log:[[t,a,b,w,x]]}]}`, wpis dodawany przy „Zagraj od nowa” i „Wyczyść wybory”) + bieżąca gra (`eloAll(k)`);
 gry z archiwum liczone po kolei wg `end`. Zapis archiwum dopiero po wczytaniu wersji z serwera (`archReady`), żeby nie zgubić starszych gier.
-Zasiane 2026-11-18 z kopii: Antek gazetka (584), Antek rok-2026 (789), Jaś do-1000 (618). Dwóch pierwszych gier Jasia (3 i 5 listopada) brak – tylko top 10 w historii.
+Zasiane 2026-11-18 z kopii: Antek gazetka (584), Antek rok-2026 (789), Jaś do-1000 (618). Dwóch pierwszych gier Jasia (3 i 5 listopada) brak.
+Top 10 Elo w historii wyników nadal dotyczy jednej rozgrywki (`eloFor`).
 
 Historia wyników: po „Gotowe ✓” na liście marzeń wynik (kolejność, „tuż za finałem”, statystyki) zapisuje się w `hist-jas` /
 `hist-antek` (osobne dokumenty, jedna pozycja na rozgrywkę – `runId` w stanie dziecka; ponowne „Gotowe” aktualizuje wpis).
