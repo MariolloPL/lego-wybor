@@ -296,6 +296,11 @@ details.table summary{cursor:pointer;padding:12px 16px;font:700 18px/1.2 var(--f
 /* ---------- okna ---------- */
 dialog{border:0;border-radius:20px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 32px));box-shadow:0 20px 60px rgb(0 0 0/.35)}
 .chg-row{margin-top:18px}
+.prange{gap:8px}
+.prange label{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--muted)}
+.prange input{font:inherit;font-weight:700;width:96px;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.plabel,.zl{font-weight:800;color:var(--muted)}
+@media (max-width:480px){ .prange .plabel{flex-basis:100%} }
 .own{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:5px 12px;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-weight:800;font-size:13px;line-height:1.2}
 .own:focus-visible{outline:3px solid var(--kid);outline-offset:2px}
 .own.on{border-color:var(--kid);color:var(--kid)}
@@ -420,6 +425,13 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
     </div>
     <div class="row">
       <input class="all-search" id="all-q" type="search" placeholder="Szukaj: numer albo nazwa" autocomplete="off" aria-label="Szukaj zestawu">
+    </div>
+    <div class="row prange">
+      <span class="plabel">Cena „teraz od” (zł):</span>
+      <label>od<input id="all-pmin" type="number" inputmode="numeric" min="0" step="10" placeholder="0"></label>
+      <label>do<input id="all-pmax" type="number" inputmode="numeric" min="0" step="10" placeholder="bez limitu"></label>
+    </div>
+    <div class="row">
       <select class="all-sort" id="all-list" aria-label="Lista"></select>
       <select class="all-sort" id="all-sort" aria-label="Sortuj">
         <option value="num">Sortuj: numer</option><option value="price">Sortuj: cena (teraz od)</option><option value="eloJas">Sortuj: Elo Jasia (wszystkie gry)</option><option value="eloAntek">Sortuj: Elo Antka (wszystkie gry)</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
@@ -959,6 +971,8 @@ function renderAll(){
   if (!lsel.options.length) lsel.innerHTML = `<option value="">Lista: wszystkie listy</option>` + Object.entries(LISTS).map(([id,L]) => `<option value="${id}">Lista: ${esc(L.name)} (${fullList(id).length})</option>`).join("");
   const all = allSets(lsel.value);
   const elo = { jas: eloAll("jas"), antek: eloAll("antek") };
+  const place = {};   // miejsce w rankingu Elo każdego chłopca (1 = najwyżej)
+  for (const k of ["jas","antek"]){ place[k] = {}; Object.keys(elo[k].rating).sort((a,b) => elo[k].rating[b]-elo[k].rating[a]).forEach((n,i) => place[k][n] = i+1); }
   const gn = c => c===1 ? "gra" : c>1 && c<5 ? "gry" : "gier";
   document.getElementById("master-note").textContent = `Jaś: ${elo.jas.count} ${gn(elo.jas.count)}, ${elo.jas.total} pojedynków · Antek: ${elo.antek.count} ${gn(elo.antek.count)}, ${elo.antek.total} pojedynków`;
   const sj = new Set(listOf("jas")), sa = new Set(listOf("antek"));
@@ -972,6 +986,10 @@ function renderAll(){
   const sort = document.getElementById("all-sort").value;
   let list = all.filter(n => { const o = on(n);
     return allFilter==="all" || (allFilter==="both" && o.j && o.a) || (allFilter==="jas" && o.j && !o.a) || (allFilter==="antek" && o.a && !o.j) || (allFilter==="none" && !o.j && !o.a) || (allFilter==="owned" && isOwned(n)); });
+  // filtr ceny „teraz od” (gdy brak oferty – cena katalogowa)
+  const pmin = parseFloat(document.getElementById("all-pmin").value), pmax = parseFloat(document.getElementById("all-pmax").value);
+  const priceNow = n => { const p = getSet(n).lk || {}; return p.now ?? p.rrp ?? null; };
+  if (!isNaN(pmin) || !isNaN(pmax)) list = list.filter(n => { const v = priceNow(n); return v!=null && (isNaN(pmin) || v >= pmin) && (isNaN(pmax) || v <= pmax); });
   if (q) list = list.filter(n => n.includes(q) || (getSet(n).name||"").toLowerCase().includes(q) || (getSet(n).theme||"").toLowerCase().includes(q));
   const eloKey = k => n => { const v = elo[k].rating[n]; return v==null ? "1|" + n.padStart(7,"0") : "0|" + String(Math.round(9999 - v)).padStart(5,"0"); };
   const priceKey = n => { const p = getSet(n).lk || {}; const v = p.now ?? p.rrp; return v==null ? "9" : "0" + String(Math.round(v*100)).padStart(9,"0"); };
@@ -980,7 +998,7 @@ function renderAll(){
   document.getElementById("alist").innerHTML = list.length ? list.map(n => {
     const s = getSet(n), o = on(n);
     const tag = (k, nm) => { const v = elo[k].rating[n], gm = elo[k].games[n] || 0;
-      return `<span class="tag ${k}" title="Na liście: ${nm}${state.kids[k].review[n] ? " · ocena: " + ({S:"Super!",M:"Może",N:"Nie"})[state.kids[k].review[n]] : ""}${gm ? ` · Elo ${Math.round(v)} po ${gm} pojedynkach` : ""}">${nm}<span class="st">${STLABEL[state.kids[k].review[n]||"U"]}</span>${gm ? `<span class="elo">Elo ${Math.round(v)}</span>` : ""}</span>`; };
+      return `<span class="tag ${k}" title="Na liście: ${nm}${state.kids[k].review[n] ? " · ocena: " + ({S:"Super!",M:"Może",N:"Nie"})[state.kids[k].review[n]] : ""}${gm ? ` · Elo ${Math.round(v)} pkt (${place[k][n]}. miejsce z ${Object.keys(place[k]).length}) po ${gm} pojedynkach ze wszystkich gier` : ""}">${nm}<span class="st">${STLABEL[state.kids[k].review[n]||"U"]}</span>${gm ? `<span class="elo">${place[k][n]}. miejsce · ${Math.round(v)} pkt</span>` : ""}</span>`; };
     return `<div class="arow">${picHTML(s,false)}<div style="min-width:0">
       <div class="nm"><span class="no">${s.n}</span>${title(s)}</div>
       <div class="sub">${metaLine(s)}${s.year ? " · " + s.year : ""}${s.nameCheck ? ' <span class="chk" title="Nazwa poprawiona ręcznie – sprawdź na pudełku">· nazwa do sprawdzenia</span>' : ""}</div>
@@ -990,6 +1008,8 @@ function renderAll(){
   }).join("") : `<div class="empty">Nic nie pasuje do wyszukiwania.</div>`;
 }
 document.getElementById("all-q").addEventListener("input", renderAll);
+document.getElementById("all-pmin").addEventListener("input", renderAll);
+document.getElementById("all-pmax").addEventListener("input", renderAll);
 document.getElementById("all-sort").addEventListener("change", renderAll);
 document.getElementById("all-list").addEventListener("change", renderAll);
 
