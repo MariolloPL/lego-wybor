@@ -296,6 +296,7 @@ details.table summary{cursor:pointer;padding:12px 16px;font:700 18px/1.2 var(--f
 /* ---------- okna ---------- */
 dialog{border:0;border-radius:20px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100vw - 32px));box-shadow:0 20px 60px rgb(0 0 0/.35)}
 .chg-row{margin-top:18px}
+.tag.master{background:var(--ink);color:var(--surface)}
 .own{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:5px 12px;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-weight:800;font-size:13px;line-height:1.2}
 .own:focus-visible{outline:3px solid var(--kid);outline-offset:2px}
 .own.on{border-color:var(--kid);color:var(--kid)}
@@ -422,11 +423,11 @@ dialog::backdrop{background:rgb(10 15 25/.5)}
       <input class="all-search" id="all-q" type="search" placeholder="Szukaj: numer albo nazwa" autocomplete="off" aria-label="Szukaj zestawu">
       <select class="all-sort" id="all-list" aria-label="Lista"></select>
       <select class="all-sort" id="all-sort" aria-label="Sortuj">
-        <option value="num">Sortuj: numer</option><option value="price">Sortuj: cena (teraz od)</option><option value="eloJas">Sortuj: Elo Jasia</option><option value="eloAntek">Sortuj: Elo Antka</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
+        <option value="eloMaster">Sortuj: master Elo (wszystkie gry)</option><option value="num">Sortuj: numer</option><option value="price">Sortuj: cena (teraz od)</option><option value="eloJas">Sortuj: Elo Jasia (obecna gra)</option><option value="eloAntek">Sortuj: Elo Antka (obecna gra)</option><option value="theme">Sortuj: seria</option><option value="name">Sortuj: nazwa</option><option value="age">Sortuj: wiek</option>
       </select>
     </div>
   </div></div>
-  <div class="wrap"><p class="elo-note">Ceny z Łowcy Klocków z dnia <span id="price-date"></span> – aktualne oferty po kliknięciu „Łowca Klocków”. Elo to ranking z pojedynków: każdy zestaw zaczyna od 1500, wygrana z faworytem daje więcej punktów niż z outsiderem. Tylko dla rodzica – nie zmienia zasad gry.</p><div class="alist" id="alist"></div></div>
+  <div class="wrap"><p class="elo-note">Ceny z Łowcy Klocków z dnia <span id="price-date"></span> – aktualne oferty po kliknięciu „Łowca Klocków”. Elo to ranking z pojedynków: każdy zestaw zaczyna od 1500, wygrana z faworytem daje więcej punktów niż z outsiderem. Tylko dla rodzica – nie zmienia zasad gry. <b>🏆 Master Elo</b> – jeden ranking ze wszystkich gier obu chłopców <span id="master-note"></span>.</p><div class="alist" id="alist"></div></div>
 </section>
 
 <section id="app" hidden>
@@ -549,7 +550,17 @@ function newRunId(){ return Date.now().toString(36) + Math.random().toString(36)
 // rules: 1 = zasady pierwotne (gry rozpoczęte przed zmianą, np. bieżąca gra Antka), 2 = „Oba super / Żaden” + druga szansa wg Elo
 const RULES_NOW = 2;
 function blankKid(){ return { stage:0, review:{}, log:[], rank:[], done:false, extra:[], runId:newRunId(), rules:RULES_NOW, list:null }; }
-function defaults(){ return { settings:{ fmin:3, fmax:5, livesS:3, livesM:2 }, kids:{ jas:blankKid(), antek:blankKid() }, history:{ jas:[], antek:[] } }; }
+function defaults(){ return { settings:{ fmin:3, fmax:5, livesS:3, livesM:2 }, kids:{ jas:blankKid(), antek:blankKid() }, history:{ jas:[], antek:[] }, archive:[] }; }
+// Archiwum gier (dokument „archive”, wspólny): dzienniki pojedynków zakończonych i wyzerowanych rozgrywek obu chłopców.
+// Służy tylko do „master Elo” ze wszystkich gier. Wpis: { id, kid, list, end, log:[[t,a,b,w,x], …] }.
+function cleanArchive(arr){
+  if (!Array.isArray(arr)) return [];
+  const seen = new Set();
+  return arr.filter(g => g && typeof g.id==="string" && (g.kid==="jas" || g.kid==="antek") && Array.isArray(g.log) && !seen.has(g.id) && seen.add(g.id))
+    .map(g => ({ id: g.id.slice(0,40), kid: g.kid, list: typeof g.list==="string" ? g.list.slice(0,40) : "", end: typeof g.end==="string" ? g.end.slice(0,40) : "",
+      log: g.log.filter(e => Array.isArray(e) && "drfv".includes(e[0]) && okNum(e[1]) && (e[0]==="v" || okNum(e[2]))).map(e => e.slice(0,5)) }));
+}
+const packLog = log => log.filter(e => e.t!=="v").map(e => [e.t, e.a, e.b, e.w || null].concat(e.x ? [e.x] : []));
 // Historia zakończonych rozgrywek: zapis danych (nie obrazka) – obraz PNG generujemy z nich na żądanie.
 function cleanRuns(arr){
   if (!Array.isArray(arr)) return [];
@@ -588,7 +599,7 @@ function cleanSettings(s){
 // na każdym etapie, ale jego rozegrane pojedynki zostają w dzienniku (nie zmieniają się wyniki innych zestawów).
 const isOwned = n => !!(state.settings.owned && state.settings.owned.includes(n));
 let state = defaults();
-try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas,"jas"), antek:cleanKid(o.kids&&o.kids.antek,"antek") }, history:{ jas:cleanRuns(o.history&&o.history.jas), antek:cleanRuns(o.history&&o.history.antek) } }; } } catch(e){}
+try { const raw = localStorage.getItem(KEY); if (raw){ const o = JSON.parse(raw); state = { settings: cleanSettings(o.settings), kids:{ jas:cleanKid(o.kids&&o.kids.jas,"jas"), antek:cleanKid(o.kids&&o.kids.antek,"antek") }, history:{ jas:cleanRuns(o.history&&o.history.jas), antek:cleanRuns(o.history&&o.history.antek) }, archive: cleanArchive(o.archive) }; } } catch(e){}
 
 /* ================= zapis =================
    Od razu w przeglądarce (szybko), a w tle na wspólnym serwerze – osobny dokument dla każdego dziecka.
@@ -614,13 +625,14 @@ async function flush(){
   }
   if (dirty.size && backend){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 600); }
 }
-const SYNC_KEYS = ["jas","antek","settings","hist-jas","hist-antek"];
+const SYNC_KEYS = ["jas","antek","settings","hist-jas","hist-antek","archive"];
+let archReady = false, archPending = [];   // archiwum zapisujemy dopiero po wczytaniu wersji z serwera (żeby nie nadpisać starszych gier)
 const histKid = key => key.startsWith("hist-") ? key.slice(5) : null;
 function bodyFor(key){
   const h = histKid(key);
-  return key==="settings" ? { settings: state.settings } : h ? { v:1, runs: state.history[h] } : { v:2, kid: state.kids[key] };
+  return key==="archive" ? { v:1, games: state.archive } : key==="settings" ? { settings: state.settings } : h ? { v:1, runs: state.history[h] } : { v:2, kid: state.kids[key] };
 }
-function localFor(key){ const h = histKid(key); return key==="settings" ? state.settings : h ? state.history[h] : state.kids[key]; }
+function localFor(key){ const h = histKid(key); return key==="archive" ? state.archive : key==="settings" ? state.settings : h ? state.history[h] : state.kids[key]; }
 function setSync(s){
   if (s==="saving" || s==="ok") dbState = "ok";
   if (s==="local" || s==="auth" || s==="retry") dbState = s;
@@ -667,6 +679,16 @@ function onRemote(key, d, meta, firstRef){
   if (!meta.fromCache && dbState!=="ok") setSync("ok");
   if (meta.pending || writing[key] || dirty.has(key)) return;
   const h = histKid(key);
+  if (key==="archive"){
+    if (meta.fromCache) return;
+    const remote = d && d.v===1 && Array.isArray(d.games) ? cleanArchive(d.games) : [];
+    const ids = new Set(remote.map(g => g.id));
+    const add = archPending.concat(archReady ? [] : state.archive).filter(g => !ids.has(g.id));
+    state.archive = remote.concat(add); archPending = []; archReady = true; cache();
+    if (add.length) save("archive");
+    if (screen==="all") renderAll();
+    return;
+  }
   const usable = d && (key==="settings" ? !!d.settings : h ? d.v===1 && Array.isArray(d.runs) : d.v===2 && !!d.kid);
   if (!usable){
     // pierwszy start: przenieś na serwer to, co było zapisane na tym urządzeniu
@@ -913,6 +935,20 @@ function eloFor(k){
   }
   return { rating: r, games: g };
 }
+// Master Elo: jeden ranking ze WSZYSTKICH pojedynków obu chłopców – archiwum (po kolei wg daty) + bieżące gry. Tylko informacja.
+function eloMaster(){
+  const cur = new Set(["jas","antek"].map(k => state.kids[k].runId));
+  const games = state.archive.filter(g => !cur.has(g.id)).slice().sort((a,b) => a.end.localeCompare(b.end)).map(g => g.log)
+    .concat(["jas","antek"].map(k => packLog(state.kids[k].log)));
+  const r = {}, g = {}; const get = n => r[n] ?? ELO_START; let total = 0;
+  for (const log of games) for (const [t,a,b,w] of log){
+    if (t==="v" || !a || !b) continue;
+    if (!w && t!=="f") continue;
+    const ra = get(a), rb = get(b), ea = 1 / (1 + Math.pow(10, (rb - ra) / 400)), sa = !w ? 0.5 : w===a ? 1 : 0;
+    r[a] = ra + ELO_K * (sa - ea); r[b] = rb + ELO_K * ((1 - sa) - (1 - ea)); g[a] = (g[a]||0) + 1; g[b] = (g[b]||0) + 1; total++;
+  }
+  return { rating: r, games: g, total, count: games.filter(l => l.length).length };
+}
 function showAll(){
   screen = "all"; kid = null; document.getElementById("hist").hidden = true;
   document.getElementById("pick").hidden = true; document.getElementById("app").hidden = true; document.getElementById("all").hidden = false;
@@ -923,7 +959,8 @@ function renderAll(){
   const lsel = document.getElementById("all-list");
   if (!lsel.options.length) lsel.innerHTML = `<option value="">Lista: wszystkie listy</option>` + Object.entries(LISTS).map(([id,L]) => `<option value="${id}">Lista: ${esc(L.name)} (${fullList(id).length})</option>`).join("");
   const all = allSets(lsel.value);
-  const elo = { jas: eloFor("jas"), antek: eloFor("antek") };
+  const elo = { jas: eloFor("jas"), antek: eloFor("antek"), master: eloMaster() };
+  document.getElementById("master-note").textContent = `(${elo.master.count} ${elo.master.count===1?"gra":elo.master.count<5?"gry":"gier"}, ${elo.master.total} pojedynków)`;
   const sj = new Set(listOf("jas")), sa = new Set(listOf("antek"));
   const on = n => ({ j: sj.has(n), a: sa.has(n) });
   const cnt = { all: all.length, both: 0, jas: 0, antek: 0, none: 0, owned: all.filter(isOwned).length };
@@ -938,7 +975,7 @@ function renderAll(){
   if (q) list = list.filter(n => n.includes(q) || (getSet(n).name||"").toLowerCase().includes(q) || (getSet(n).theme||"").toLowerCase().includes(q));
   const eloKey = k => n => { const v = elo[k].rating[n]; return v==null ? "1|" + n.padStart(7,"0") : "0|" + String(Math.round(9999 - v)).padStart(5,"0"); };
   const priceKey = n => { const p = getSet(n).lk || {}; const v = p.now ?? p.rrp; return v==null ? "9" : "0" + String(Math.round(v*100)).padStart(9,"0"); };
-  const key = { price: priceKey, eloJas: eloKey("jas"), eloAntek: eloKey("antek"), num: n => n.padStart(7,"0"), theme: n => (getSet(n).theme||"") + "|" + n.padStart(7,"0"), name: n => (getSet(n).name||"zz").toLowerCase(), age: n => String(getSet(n).age||99).padStart(2,"0") + "|" + n.padStart(7,"0") }[sort];
+  const key = { price: priceKey, eloJas: eloKey("jas"), eloAntek: eloKey("antek"), eloMaster: eloKey("master"), num: n => n.padStart(7,"0"), theme: n => (getSet(n).theme||"") + "|" + n.padStart(7,"0"), name: n => (getSet(n).name||"zz").toLowerCase(), age: n => String(getSet(n).age||99).padStart(2,"0") + "|" + n.padStart(7,"0") }[sort];
   list.sort((a,b) => key(a).localeCompare(key(b), "pl"));
   document.getElementById("alist").innerHTML = list.length ? list.map(n => {
     const s = getSet(n), o = on(n);
@@ -948,7 +985,7 @@ function renderAll(){
       <div class="nm"><span class="no">${s.n}</span>${title(s)}</div>
       <div class="sub">${metaLine(s)}${s.year ? " · " + s.year : ""}${s.nameCheck ? ' <span class="chk" title="Nazwa poprawiona ręcznie – sprawdź na pudełku">· nazwa do sprawdzenia</span>' : ""}</div>
       ${priceHTML(s)}
-      <div class="tags">${o.j ? tag("jas","Jaś") : ""}${o.a ? tag("antek","Antek") : ""}</div>${ownBtn(n, "Mamy już")}</div>
+      <div class="tags">${elo.master.games[n] ? `<span class="tag master" title="Master Elo ze wszystkich gier obu chłopców · ${elo.master.games[n]} pojedynków">🏆 Master<span class="elo">${Math.round(elo.master.rating[n])}</span></span>` : ""}${o.j ? tag("jas","Jaś") : ""}${o.a ? tag("antek","Antek") : ""}</div>${ownBtn(n, "Mamy już")}</div>
       <div class="pklinks">${shopLinks(s.n)}</div></div>`;
   }).join("") : `<div class="empty">Nic nie pasuje do wyszukiwania.</div>`;
 }
@@ -978,8 +1015,15 @@ function eloTop10(k){
 }
 // Starszy wpis bez Elo: jeśli to wciąż bieżąca rozgrywka dziecka, liczymy ranking z jej dziennika (bez zapisu)
 function runElo(k, r){ return r.elo && r.elo.length ? r.elo : (r.id===state.kids[k].runId && state.kids[k].log.length ? eloTop10(k) : null); }
+function archiveGame(k){
+  const ks = state.kids[k]; const log = packLog(ks.log); if (!log.length) return;
+  const g = { id: ks.runId, kid: k, list: ks.list || "", end: new Date().toISOString(), log };
+  const i = state.archive.findIndex(x => x.id===g.id); if (i>=0) state.archive[i] = g; else state.archive.push(g);
+  if (archReady || !backend) save("archive"); else archPending.push(g);
+}
 function newGame(k){
   const old = state.kids[k];
+  archiveGame(k);
   if (old.done){ const h = state.history[k].find(r => r.id===old.runId); if (!h || !h.elo || !h.elo.length) snapshotRun(k); }   // starszy wpis dostaje ranking Elo, zanim gra zniknie
   state.kids[k] = Object.assign(blankKid(), { extra: old.extra });   // zestawy dodane po numerze zostają na liście
   save(k); openKid(k);
@@ -1621,7 +1665,7 @@ for (const k of SETTING_KEYS) document.getElementById(k).addEventListener("chang
 });
 function resetKid(k, btn){
   if (!btn.dataset.armed){ btn.dataset.armed = "1"; btn.textContent = "Na pewno? Kliknij jeszcze raz"; return; }
-  state.kids[k] = blankKid(); save(k); btn.dataset.armed = ""; btn.textContent = "Wyczyść wybory " + KIDGEN[k];
+  archiveGame(k); state.kids[k] = blankKid(); save(k); btn.dataset.armed = ""; btn.textContent = "Wyczyść wybory " + KIDGEN[k];
   document.getElementById("reset-note").textContent = "Wyczyszczono wybory " + KIDGEN[k] + ".";
   if (kid===k) openKid(k);
 }

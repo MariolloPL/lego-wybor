@@ -4,7 +4,7 @@
 import { DurableObject } from "cloudflare:workers";
 
 const BACKUPS = 500; // 500 ostatnich wersji każdego dokumentu (zapis po każdym kliknięciu)
-const KEYS = new Set(["jas", "antek", "settings", "hist-jas", "hist-antek"]);
+const KEYS = new Set(["jas", "antek", "settings", "hist-jas", "hist-antek", "archive"]);
 const norm = (x) => String(x || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 
 // porównanie w stałym czasie, żeby nie zdradzać długości zgodnego fragmentu
@@ -43,7 +43,7 @@ export default {
     }
     if (request.method === "PUT") {
       const text = await request.text();
-      if (text.length > 250_000) return json({ error: "too_big" }, 413);
+      if (text.length > (key === "archive" ? 1_500_000 : 250_000)) return json({ error: "too_big" }, 413);   // archiwum gier jest większe
       let data;
       try { data = JSON.parse(text); } catch { return json({ error: "bad_json" }, 400); }
       if (!data || typeof data !== "object" || Array.isArray(data)) return json({ error: "bad_body" }, 400);
